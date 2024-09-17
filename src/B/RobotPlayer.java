@@ -53,6 +53,7 @@ public strictfp class RobotPlayer {
     static Strategy strategy = Strategy.RANDOM;
 
     static MapLocation closestSpawnLoc;
+    static Direction homeDir;
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -142,7 +143,7 @@ public strictfp class RobotPlayer {
         healIfPossible(rc);
         attackIfPossible(rc);
         placeTrapIfPossible(rc);
-        moveToEnamySpawn(rc);
+        moveToEnemySpawn(rc);
     }
 
     private static void placeTrapIfPossible(RobotController rc) throws GameActionException {
@@ -250,7 +251,7 @@ public strictfp class RobotPlayer {
         }
     }
 
-    private static void moveToEnamySpawn(RobotController rc) throws GameActionException {
+    private static void moveToEnemySpawn(RobotController rc) throws GameActionException {
 //        MapLocation[] enemySpawnLocs = rc.getAllySpawnLocations()
 //        MapLocation firstLoc = enemySpawnLocs[0];
 //        moveTo(rc, firstLoc);
@@ -312,20 +313,23 @@ public strictfp class RobotPlayer {
 
             rc.setIndicatorString("Going home to: " + closestSpawnLoc);
         }
+        if (homeDir == null || !rc.canMove(homeDir)) {
+            homeDir = rc.getLocation().directionTo(closestSpawnLoc);
+        }
 
         // Check if a closest spawn location was found
         moveTo(rc, closestSpawnLoc);
     }
 
     private static Direction getNextDirection(Direction current, RobotController rc) throws GameActionException {
-        if (rc.canMove(current.rotateRight())) {
-            return current.rotateRight();
-        } else if (rc.canMove(current.rotateLeft())) {
-            return current.rotateLeft();
+        if (rc.canMove(current.rotateRight().rotateRight())) {
+            return current.rotateRight().rotateRight();
+        } else if (rc.canMove(current.rotateLeft().rotateLeft())) {
+            return current.rotateLeft().rotateLeft();
         } else if (rc.canMove(current.opposite())) {
             return current.opposite();
         } else {
-            final MapInfo[] a = rc.senseNearbyMapInfos();
+            final MapInfo[] a = rc.senseNearbyMapInfos(2);
             return Arrays.stream(a)
                     .filter(mapInfo -> mapInfo.isPassable())
                     .map(mapInfo -> rc.getLocation().directionTo(mapInfo.getMapLocation()))
