@@ -43,14 +43,6 @@ public strictfp class RobotPlayer {
             Direction.NORTHWEST,
     };
 
-    enum Strategy {
-        RANDOM,
-        CAPTURE,
-        GO_HOME
-    }
-
-    static Strategy strategy = Strategy.RANDOM;
-
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
      * It is like the main function for your robot. If this method returns, the robot dies!
@@ -94,6 +86,9 @@ public strictfp class RobotPlayer {
                         case GO_HOME:
                             goHome(rc);
                             break;
+                        case HUNT:
+                            hunt(rc);
+                            break;
                     }
 
                     // We can also move our code into different methods or classes to better organize it!
@@ -122,6 +117,45 @@ public strictfp class RobotPlayer {
         }
 
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
+    }
+
+    static Strategy strategy = Strategy.RANDOM;
+
+    private static void hunt(RobotController rc) throws GameActionException {
+        // check if we can get some bread
+        // check if i'm around a lot of damaged allies, if so do a heal
+        // if not, search for enemies and attack them
+        // if none found nearby move towards enemy spawn point
+
+        gotoCrumbIfPossible(rc);
+        healIfPossible(rc);
+        attackIfPossible(rc);
+        placeTrapIfPossible(rc);
+        moveToEnamySpawn(rc);
+    }
+
+    private static void placeTrapIfPossible(RobotController rc) throws GameActionException {
+        if (rc.canBuild(TrapType.EXPLOSIVE, rc.getLocation())) {
+            rc.build(TrapType.EXPLOSIVE, rc.getLocation());
+        }
+    }
+
+    private static void gotoCrumbIfPossible(RobotController rc) throws GameActionException {
+        MapLocation[] crumbs = rc.senseNearbyCrumbs(-1);
+        MapLocation closestCrumb = Arrays.stream(crumbs).min(Comparator.comparingInt(x -> rc.getLocation().distanceSquaredTo(x))).orElse(null);
+        if (crumbs.length > 0) {
+            moveTo(rc, closestCrumb);
+        }
+    }
+
+    private static void healIfPossible(RobotController rc) throws GameActionException {
+        RobotInfo[] nearbyAllies = rc.senseNearbyRobots(4, rc.getTeam());
+        if (nearbyAllies.length > 0) {
+            RobotInfo target = chooseHealTarget(rc, nearbyAllies);
+            if (target != null) {
+                rc.heal(nearbyAllies[0].getLocation());
+            }
+        }
     }
 
     private static void decide(RobotController rc) throws GameActionException {
@@ -186,12 +220,31 @@ public strictfp class RobotPlayer {
             MapLocation[] broadcastedFlags = rc.senseBroadcastFlagLocations();
             if (broadcastedFlags.length == 0) {
 
-                System.out.println("All flags captured??");
                 return;
             }
 
             moveTo(rc, broadcastedFlags[0]);
         }
+    }
+
+    private static void moveToEnamySpawn(RobotController rc) throws GameActionException {
+//        MapLocation[] enemySpawnLocs = rc.getAllySpawnLocations()
+//        MapLocation firstLoc = enemySpawnLocs[0];
+//        moveTo(rc, firstLoc);
+    }
+
+    private static RobotInfo chooseHealTarget(RobotController rc, RobotInfo[] nearbyAllies) {
+        Stream<RobotInfo> healableRobots = Arrays.stream(nearbyAllies).filter(x -> rc.canHeal(x.getLocation()));
+        // sort them by health and return lowest one
+
+        return healableRobots.min(Comparator.comparingInt(x -> x.getHealth())).orElse(null);
+    }
+
+    enum Strategy {
+        RANDOM,
+        CAPTURE,
+        GO_HOME,
+        HUNT,
     }
 
     private static void attackIfPossible(RobotController rc) throws GameActionException {
