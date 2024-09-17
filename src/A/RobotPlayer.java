@@ -90,6 +90,19 @@ public strictfp class RobotPlayer {
                         MapLocation firstLoc = spawnLocs[0];
                         Direction dir = rc.getLocation().directionTo(firstLoc);
                         if (rc.canMove(dir)) rc.move(dir);
+                        else {
+                            Arrays.stream(directions)
+                                    .filter(direction -> direction!=dir)
+                                    .filter(direction -> rc.canMove(direction))
+                                    .findFirst()
+                                    .ifPresent(direction -> {
+                                        try {
+                                            rc.move(direction);
+                                        } catch (GameActionException e) {
+                                            // ignore
+                                        }
+                                    });
+                        }
                     }
                     // Move and attack randomly if no objective.
                     Direction dir = directions[rng.nextInt(directions.length)];
