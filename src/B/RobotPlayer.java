@@ -25,7 +25,7 @@ public strictfp class RobotPlayer {
      * import at the top of this file. Here, we *seed* the RNG with a constant number (6147); this makes sure
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
-    static final Random rng = new Random();
+    static final Random rng = new Random(1337);
 
     /**
      * Array containing all the possible movement directions.
@@ -190,42 +190,58 @@ public strictfp class RobotPlayer {
         Direction dir = rc.getLocation().directionTo(location);
         if (rc.canMove(dir)) rc.move(dir);
         else {
-            Arrays.stream(directions)
-                    .filter(direction -> direction != dir)
-                    .filter(direction -> rc.canMove(direction))
-                    .findFirst()
-                    .ifPresent(direction -> {
-                        try {
-                            rc.move(direction);
-                        } catch (GameActionException e) {
-                            // ignore
-                        }
-                    });
+            final Direction nextDirection = getNextDirection(directions, dir, rc, 0);
+            if (nextDirection != null) {
+                rc.move(nextDirection);
+            }
         }
     }
 
     private static void goHome(RobotController rc) throws GameActionException {
-        // If we are holding an enemy flag, singularly focus on moving towards
-        // an ally spawn zone to capture it! We use the check roundNum >= SETUP_ROUNDS
-        // to make sure setup phase has ended.
         MapLocation[] spawnLocs = rc.getAllySpawnLocations();
         MapLocation firstLoc = spawnLocs[0];
-        Direction dir = rc.getLocation().directionTo(firstLoc);
-        if (rc.canMove(dir)) rc.move(dir);
-        else {
-            Arrays.stream(directions)
-                    .filter(direction -> direction != dir)
-                    .filter(direction -> rc.canMove(direction))
-                    .findFirst()
-                    .ifPresent(direction -> {
-                        try {
-                            rc.move(direction);
-                        } catch (GameActionException e) {
-                            // ignore
-                        }
-                    });
-        }
+//        Direction dir = rc.getLocation().directionTo(new MapLocation(0, 22));
+        moveTo(rc, firstLoc);
+//
+//        // If we are holding an enemy flag, singularly focus on moving towards
+//        // an ally spawn zone to capture it! We use the check roundNum >= SETUP_ROUNDS
+//        // to make sure setup phase has ended.
+////        if (rc.hasFlag() && rc.getRoundNum() >= GameConstants.SETUP_ROUNDS) {
+//        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
+//        MapLocation firstLoc = spawnLocs[0];
+//        Direction dir = rc.getLocation().directionTo(new MapLocation(0, 22));
+//        if (rc.canMove(dir)) rc.move(dir);
+//        else {
+//            final Direction nextDirection = getNextDirection(directions, dir, rc, 0);
+//            if (nextDirection != null) {
+//                System.out.println("direction: " + nextDirection);
+//                rc.move(nextDirection);
+//            }
+//        }
+//        }
+    }
 
+    private static Direction getNextDirection(Direction[] directions, Direction current, RobotController rc, int attempts) {
+        if (attempts > directions.length) {
+            return null;
+        }
+        int currentIndex = getIndexOf(directions, current);
+        int nextIndex = (currentIndex + 1) % directions.length;
+        final Direction direction = directions[nextIndex];
+        if (rc.canMove(direction)) {
+            return direction;
+        } else {
+            return getNextDirection(directions, direction, rc, ++attempts);
+        }
+    }
+
+    private static int getIndexOf(Direction[] array, Direction value) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return i;
+            }
+        }
+        return -1; // Return -1 if the value is not found
     }
 
     private static void updateEnemyRobots(RobotController rc) throws GameActionException {
