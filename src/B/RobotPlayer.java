@@ -257,6 +257,8 @@ public strictfp class RobotPlayer {
 //        moveTo(rc, firstLoc);
         // TODO do something here!!!
         rc.setIndicatorString("Moving to enemy spawn");
+//        if all else fails, random
+        random(rc);
     }
 
     private static RobotInfo chooseHealTarget(RobotController rc, RobotInfo[] nearbyAllies) {
@@ -285,6 +287,7 @@ public strictfp class RobotPlayer {
 
     private static void moveTo(RobotController rc, MapLocation location) throws GameActionException {
         Direction dir = rc.getLocation().directionTo(location);
+        rc.setIndicatorLine(rc.getLocation(), location, 255, 0, 0);
         if (rc.canMove(dir)) {
             rc.move(dir);
         } else {
@@ -294,11 +297,15 @@ public strictfp class RobotPlayer {
             }
 
             // if we are stuck, try to fill water or another land action
-            MapInfo[] nearbyMapInfos = rc.senseNearbyMapInfos(1);
-            for (MapInfo mapInfo : nearbyMapInfos) {
-                if (rc.canFill(mapInfo.getMapLocation())) {
-                    rc.fill(mapInfo.getMapLocation());
-                }
+            fillNearbyWithWater(rc);
+        }
+    }
+
+    private static void fillNearbyWithWater(RobotController rc) throws GameActionException {
+        MapInfo[] nearbyMapInfos = rc.senseNearbyMapInfos(1);
+        for (MapInfo mapInfo : nearbyMapInfos) {
+            if (rc.canFill(mapInfo.getMapLocation())) {
+                rc.fill(mapInfo.getMapLocation());
             }
         }
     }
