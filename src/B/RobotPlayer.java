@@ -3,7 +3,9 @@ package B;
 import battlecode.common.*;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Random;
+import java.util.stream.Stream;
 
 /**
  * RobotPlayer is the class that describes your main robot strategy.
@@ -25,7 +27,7 @@ public strictfp class RobotPlayer {
      * import at the top of this file. Here, we *seed* the RNG with a constant number (6147); this makes sure
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
-    static final Random rng = new Random(1337);
+    static final Random rng = new Random();
 
     /**
      * Array containing all the possible movement directions.
@@ -167,6 +169,15 @@ public strictfp class RobotPlayer {
             return;
         }
 
+        // have a small chance of attacking if we are going for the flag and see an enemy
+        RobotInfo[] enemyRobots = rc.senseNearbyRobots(4, rc.getTeam().opponent());
+        if (enemyRobots.length > 0 && rng.nextInt() % 5 == 1) {
+            RobotInfo target = chooseAttackTarget(rc, enemyRobots);
+            if (target != null) {
+                rc.attack(enemyRobots[0].getLocation());
+            }
+        }
+
         // Move towards the enemy flag.
         // check if i can see a flag, if not request latest general location of flags to target
         FlagInfo[] enemyFlags = rc.senseNearbyFlags(1000, rc.getTeam().opponent());
@@ -184,6 +195,13 @@ public strictfp class RobotPlayer {
 
             moveTo(rc, broadcastedFlags[0]);
         }
+    }
+
+    private static RobotInfo chooseAttackTarget(RobotController rc, RobotInfo[] enemyRobots) {
+        Stream<RobotInfo> attackableRobots = Arrays.stream(enemyRobots).filter(x -> rc.canAttack(x.getLocation()));
+        // sort them by health and return lowest one
+
+        return attackableRobots.min(Comparator.comparingInt(x -> x.getHealth())).orElse(null);
     }
 
     private static void moveTo(RobotController rc, MapLocation location) throws GameActionException {
