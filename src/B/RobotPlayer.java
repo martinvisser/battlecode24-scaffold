@@ -3,9 +3,7 @@ package B;
 import battlecode.common.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static battlecode.common.GlobalUpgrade.ATTACK;
@@ -399,10 +397,18 @@ public strictfp class RobotPlayer {
     }
 
     private static Direction getNextDirection(Direction current, RobotController rc) throws GameActionException {
-        if (rc.canMove(current.rotateRight().rotateRight())) {
+        if (rc.canMove(current.rotateRight())) {
+            return current.rotateRight();
+        } else if (rc.canMove(current.rotateRight().rotateRight())) {
             return current.rotateRight().rotateRight();
+        } else if (rc.canMove(current.rotateRight().rotateRight().rotateRight())) {
+            return current.rotateRight().rotateRight().rotateRight();
+        } else if (rc.canMove(current.rotateLeft())) {
+            return current.rotateLeft();
         } else if (rc.canMove(current.rotateLeft().rotateLeft())) {
             return current.rotateLeft().rotateLeft();
+        } else if (rc.canMove(current.rotateLeft().rotateLeft().rotateLeft())) {
+            return current.rotateLeft().rotateLeft().rotateLeft();
         } else if (rc.canMove(current.opposite())) {
             return current.opposite();
         } else {
