@@ -176,6 +176,12 @@ public strictfp class RobotPlayer {
             moveTo(rc, flagLocation.getLocation());
         } else {
             MapLocation[] broadcastedFlags = rc.senseBroadcastFlagLocations();
+            if (broadcastedFlags.length == 0) {
+
+                System.out.println("All flags captured??");
+                return;
+            }
+
             moveTo(rc, broadcastedFlags[0]);
         }
     }
