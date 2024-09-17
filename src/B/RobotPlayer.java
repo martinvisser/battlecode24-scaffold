@@ -136,6 +136,8 @@ public strictfp class RobotPlayer {
         // if not, search for enemies and attack them
         // if none found nearby move towards enemy spawn point
 
+        rc.setIndicatorString("Hunting");
+
         gotoCrumbIfPossible(rc);
         healIfPossible(rc);
         attackIfPossible(rc);
@@ -163,7 +165,11 @@ public strictfp class RobotPlayer {
         if (nearbyAllies.length > 0) {
             RobotInfo target = chooseHealTarget(rc, nearbyAllies);
             if (target != null) {
-                rc.heal(nearbyAllies[0].getLocation());
+                try {
+                    rc.heal(target.getLocation());
+                } catch (GameActionException e) {
+                    // ignore
+                }
             }
         }
     }
@@ -179,6 +185,8 @@ public strictfp class RobotPlayer {
         } else {
             strategy = Strategy.CAPTURE;
         }
+
+        rc.setIndicatorString("strategy: " + strategy);
     }
 
     private static void spawn(RobotController rc) throws GameActionException {
@@ -223,20 +231,21 @@ public strictfp class RobotPlayer {
         // check if i can see a flag, if not request latest general location of flags to target
         FlagInfo[] enemyFlags = rc.senseNearbyFlags(1000, rc.getTeam().opponent());
 
+        // filter out picked up flags
+        enemyFlags = Arrays.stream(enemyFlags).filter(x -> !x.isPickedUp()).toArray(FlagInfo[]::new);
+
         if (enemyFlags.length > 0) {
             FlagInfo flagInfo = enemyFlags[rng.nextInt(enemyFlags.length)]; // TODO make all of them go for different flags
             final MapLocation location = flagInfo.getLocation();
-            rc.setIndicatorString("Moving to enemy flag: " + location);
             moveTo(rc, location);
         } else {
             MapLocation[] broadcastedFlags = rc.senseBroadcastFlagLocations();
             if (broadcastedFlags.length == 0) {
-//                System.out.println("All flags captured??");
+                hunt(rc);
                 return;
             }
 
             final MapLocation broadcastedFlag = broadcastedFlags[rng.nextInt(broadcastedFlags.length)];
-            rc.setIndicatorString("Moving to broadcasted flag: " + broadcastedFlag);
             moveTo(rc, broadcastedFlag);
         }
     }
