@@ -61,10 +61,10 @@ public strictfp class RobotPlayer {
 
         // Hello world! Standard output is very useful for debugging.
         // Everything you say here will be directly viewable in your terminal when you run a match!
-        System.out.println("I'm alive");
+//        System.out.println("I'm alive");
 
         // You can also use indicators to save debug notes in replays.
-        rc.setIndicatorString("Hello world!");
+//        rc.setIndicatorString("Hello world!");
 
         while (true) {
             // This code runs during the entire lifespan of the robot, which is why it is in an infinite
@@ -150,7 +150,6 @@ public strictfp class RobotPlayer {
             rc.move(dir);
         } else if (rc.canAttack(nextLoc)) {
             rc.attack(nextLoc);
-            System.out.println("Take that! Damaged an enemy that was in our way!");
         }
 
         // Rarely attempt placing traps behind the robot.
@@ -163,6 +162,39 @@ public strictfp class RobotPlayer {
         if (rc.canPickupFlag(rc.getLocation())) {
             rc.pickupFlag(rc.getLocation());
             rc.setIndicatorString("Holding a flag!");
+
+            strategy = Strategy.GO_HOME;
+            return;
+        }
+
+        // Move towards the enemy flag.
+        // check if i can see a flag, if not request latest general location of flags to target
+        FlagInfo[] enemyFlags = rc.senseNearbyFlags(1000, rc.getTeam().opponent());
+
+        if (enemyFlags.length > 0) {
+            FlagInfo flagLocation = enemyFlags[0]; // TODO make all of them go for different flags
+            moveTo(rc, flagLocation.getLocation());
+        } else {
+            MapLocation[] broadcastedFlags = rc.senseBroadcastFlagLocations();
+            moveTo(rc, broadcastedFlags[0]);
+        }
+    }
+
+    private static void moveTo(RobotController rc, MapLocation location) throws GameActionException {
+        Direction dir = rc.getLocation().directionTo(location);
+        if (rc.canMove(dir)) rc.move(dir);
+        else {
+            Arrays.stream(directions)
+                    .filter(direction -> direction != dir)
+                    .filter(direction -> rc.canMove(direction))
+                    .findFirst()
+                    .ifPresent(direction -> {
+                        try {
+                            rc.move(direction);
+                        } catch (GameActionException e) {
+                            // ignore
+                        }
+                    });
         }
     }
 
@@ -170,25 +202,24 @@ public strictfp class RobotPlayer {
         // If we are holding an enemy flag, singularly focus on moving towards
         // an ally spawn zone to capture it! We use the check roundNum >= SETUP_ROUNDS
         // to make sure setup phase has ended.
-        if (rc.hasFlag() && rc.getRoundNum() >= GameConstants.SETUP_ROUNDS) {
-            MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-            MapLocation firstLoc = spawnLocs[0];
-            Direction dir = rc.getLocation().directionTo(firstLoc);
-            if (rc.canMove(dir)) rc.move(dir);
-            else {
-                Arrays.stream(directions)
-                        .filter(direction -> direction != dir)
-                        .filter(direction -> rc.canMove(direction))
-                        .findFirst()
-                        .ifPresent(direction -> {
-                            try {
-                                rc.move(direction);
-                            } catch (GameActionException e) {
-                                // ignore
-                            }
-                        });
-            }
+        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
+        MapLocation firstLoc = spawnLocs[0];
+        Direction dir = rc.getLocation().directionTo(firstLoc);
+        if (rc.canMove(dir)) rc.move(dir);
+        else {
+            Arrays.stream(directions)
+                    .filter(direction -> direction != dir)
+                    .filter(direction -> rc.canMove(direction))
+                    .findFirst()
+                    .ifPresent(direction -> {
+                        try {
+                            rc.move(direction);
+                        } catch (GameActionException e) {
+                            // ignore
+                        }
+                    });
         }
+
     }
 
     private static void updateEnemyRobots(RobotController rc) throws GameActionException {
