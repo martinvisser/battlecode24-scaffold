@@ -43,6 +43,17 @@ public strictfp class RobotPlayer {
             Direction.NORTHWEST,
     };
 
+    enum Strategy {
+        RANDOM,
+        CAPTURE,
+        GO_HOME,
+        HUNT,
+    }
+
+    static Strategy strategy = Strategy.RANDOM;
+
+    static MapLocation closestSpawnLoc;
+
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
      * It is like the main function for your robot. If this method returns, the robot dies!
@@ -119,8 +130,6 @@ public strictfp class RobotPlayer {
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
     }
 
-    static Strategy strategy = Strategy.RANDOM;
-
     private static void hunt(RobotController rc) throws GameActionException {
         // check if we can get some bread
         // check if i'm around a lot of damaged allies, if so do a heal
@@ -144,6 +153,7 @@ public strictfp class RobotPlayer {
         MapLocation[] crumbs = rc.senseNearbyCrumbs(-1);
         MapLocation closestCrumb = Arrays.stream(crumbs).min(Comparator.comparingInt(x -> rc.getLocation().distanceSquaredTo(x))).orElse(null);
         if (crumbs.length > 0) {
+            rc.setIndicatorString("Moving to closest crumb: " + closestCrumb);
             moveTo(rc, closestCrumb);
         }
     }
@@ -214,16 +224,20 @@ public strictfp class RobotPlayer {
         FlagInfo[] enemyFlags = rc.senseNearbyFlags(1000, rc.getTeam().opponent());
 
         if (enemyFlags.length > 0) {
-            FlagInfo flagLocation = enemyFlags[0]; // TODO make all of them go for different flags
-            moveTo(rc, flagLocation.getLocation());
+            FlagInfo flagInfo = enemyFlags[rng.nextInt(enemyFlags.length)]; // TODO make all of them go for different flags
+            final MapLocation location = flagInfo.getLocation();
+            rc.setIndicatorString("Moving to enemy flag: " + location);
+            moveTo(rc, location);
         } else {
             MapLocation[] broadcastedFlags = rc.senseBroadcastFlagLocations();
             if (broadcastedFlags.length == 0) {
-
+//                System.out.println("All flags captured??");
                 return;
             }
 
-            moveTo(rc, broadcastedFlags[0]);
+            final MapLocation broadcastedFlag = broadcastedFlags[rng.nextInt(broadcastedFlags.length)];
+            rc.setIndicatorString("Moving to broadcasted flag: " + broadcastedFlag);
+            moveTo(rc, broadcastedFlag);
         }
     }
 
@@ -238,13 +252,6 @@ public strictfp class RobotPlayer {
         // sort them by health and return lowest one
 
         return healableRobots.min(Comparator.comparingInt(x -> x.getHealth())).orElse(null);
-    }
-
-    enum Strategy {
-        RANDOM,
-        CAPTURE,
-        GO_HOME,
-        HUNT,
     }
 
     private static void attackIfPossible(RobotController rc) throws GameActionException {
@@ -266,9 +273,10 @@ public strictfp class RobotPlayer {
 
     private static void moveTo(RobotController rc, MapLocation location) throws GameActionException {
         Direction dir = rc.getLocation().directionTo(location);
-        if (rc.canMove(dir)) rc.move(dir);
-        else {
-            final Direction nextDirection = getNextDirection(directions, dir, rc, 0);
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+        } else {
+            final Direction nextDirection = getNextDirection(dir, rc);
             if (nextDirection != null) {
                 rc.move(nextDirection);
             }
@@ -277,49 +285,36 @@ public strictfp class RobotPlayer {
 
     private static void goHome(RobotController rc) throws GameActionException {
         MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-        MapLocation firstLoc = spawnLocs[0];
-//        Direction dir = rc.getLocation().directionTo(new MapLocation(0, 22));
-        moveTo(rc, firstLoc);
-//
-//        // If we are holding an enemy flag, singularly focus on moving towards
-//        // an ally spawn zone to capture it! We use the check roundNum >= SETUP_ROUNDS
-//        // to make sure setup phase has ended.
-////        if (rc.hasFlag() && rc.getRoundNum() >= GameConstants.SETUP_ROUNDS) {
-//        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-//        MapLocation firstLoc = spawnLocs[0];
-//        Direction dir = rc.getLocation().directionTo(new MapLocation(0, 22));
-//        if (rc.canMove(dir)) rc.move(dir);
-//        else {
-//            final Direction nextDirection = getNextDirection(directions, dir, rc, 0);
-//            if (nextDirection != null) {
-//                System.out.println("direction: " + nextDirection);
-//                rc.move(nextDirection);
-//            }
-//        }
-//        }
+        MapLocation currentLocation = rc.getLocation();
+        if (closestSpawnLoc == null) {
+            closestSpawnLoc = Arrays.stream(spawnLocs)
+                    .min(Comparator.comparingInt(loc -> loc.distanceSquaredTo(currentLocation)))
+                    .orElseGet(() -> spawnLocs[0]);
+
+            rc.setIndicatorString("Going home to: " + closestSpawnLoc);
+        }
+
+        // Check if a closest spawn location was found
+        moveTo(rc, closestSpawnLoc);
     }
 
-    private static Direction getNextDirection(Direction[] directions, Direction current, RobotController rc, int attempts) {
-        if (attempts > directions.length) {
-            return null;
-        }
-        int currentIndex = getIndexOf(directions, current);
-        int nextIndex = (currentIndex + 1) % directions.length;
-        final Direction direction = directions[nextIndex];
-        if (rc.canMove(direction)) {
-            return direction;
+    private static Direction getNextDirection(Direction current, RobotController rc) throws GameActionException {
+        if (rc.canMove(current.rotateRight())) {
+            return current.rotateRight();
+        } else if (rc.canMove(current.rotateLeft())) {
+            return current.rotateLeft();
+        } else if (rc.canMove(current.opposite())) {
+            return current.opposite();
         } else {
-            return getNextDirection(directions, direction, rc, ++attempts);
+            final MapInfo[] a = rc.senseNearbyMapInfos();
+            return Arrays.stream(a)
+                    .filter(mapInfo -> mapInfo.isPassable())
+                    .map(mapInfo -> rc.getLocation().directionTo(mapInfo.getMapLocation()))
+                    .filter(dir -> dir != current)
+                    .filter(dir -> rc.canMove(dir))
+                    .findAny()
+                    .orElse(null);
         }
-    }
-
-    private static int getIndexOf(Direction[] array, Direction value) {
-        for (int i = 0; i < array.length; i++) {
-            if (array[i] == value) {
-                return i;
-            }
-        }
-        return -1; // Return -1 if the value is not found
     }
 
     private static void updateEnemyRobots(RobotController rc) throws GameActionException {
@@ -327,7 +322,7 @@ public strictfp class RobotPlayer {
         // use the largest possible value.
         RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         if (enemyRobots.length != 0) {
-            rc.setIndicatorString("There are nearby enemy robots! Scary!");
+//            rc.setIndicatorString("There are nearby enemy robots! Scary!");
             // Save an array of locations with enemy robots in them for future use.
             MapLocation[] enemyLocations = new MapLocation[enemyRobots.length];
             for (int i = 0; i < enemyRobots.length; i++) {
