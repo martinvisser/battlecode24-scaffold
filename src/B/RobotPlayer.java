@@ -326,13 +326,11 @@ public strictfp class RobotPlayer {
     }
 
     private static void attackIfPossible(RobotController rc) throws GameActionException {
-        RobotInfo[] enemyRobots = rc.senseNearbyRobots(6, rc.getTeam().opponent());
+        RobotInfo[] enemyRobots = rc.senseNearbyRobots(4, rc.getTeam().opponent());
         if (enemyRobots.length > 0) {
             RobotInfo target = chooseAttackTarget(rc, enemyRobots);
             if (target != null) {
                 rc.attack(enemyRobots[0].getLocation());
-            } else {
-                moveTo(rc, enemyRobots[0].getLocation());
             }
         }
     }
