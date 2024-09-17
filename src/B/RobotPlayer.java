@@ -39,12 +39,13 @@ public strictfp class RobotPlayer {
         Direction.NORTHWEST,
     };
 
-    static int strategy = 0;
+    enum Strategy {
+        RANDOM,
+        CAPTURE,
+        GO_HOME
+    }
 
-    // 0 - random strategy
-    // 1 - capture
-    // 2 - go home
-
+    static Strategy strategy = Strategy.RANDOM;
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -81,13 +82,13 @@ public strictfp class RobotPlayer {
                     decide(rc);
 
                     switch (strategy) {
-                        case 0:
+                        case RANDOM:
                             random(rc);
                             break;
-                        case 1:
+                        case CAPTURE:
                             capture(rc);
                             break;
-                        case 2:
+                        case GO_HOME:
                             goHome(rc);
                             break;
                     }
@@ -121,7 +122,7 @@ public strictfp class RobotPlayer {
     }
 
     private static void decide(RobotController rc) throws GameActionException {
-        strategy = 0;
+        strategy = Strategy.RANDOM;
     }
 
     private static void spawn(RobotController rc) throws GameActionException {
