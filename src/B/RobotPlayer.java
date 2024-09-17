@@ -254,6 +254,8 @@ public strictfp class RobotPlayer {
 //        MapLocation[] enemySpawnLocs = rc.getAllySpawnLocations()
 //        MapLocation firstLoc = enemySpawnLocs[0];
 //        moveTo(rc, firstLoc);
+        // TODO do something here!!!
+        rc.setIndicatorString("Moving to enemy spawn");
     }
 
     private static RobotInfo chooseHealTarget(RobotController rc, RobotInfo[] nearbyAllies) {
@@ -288,6 +290,14 @@ public strictfp class RobotPlayer {
             final Direction nextDirection = getNextDirection(dir, rc);
             if (nextDirection != null) {
                 rc.move(nextDirection);
+            }
+
+            // if we are stuck, try to fill water or another land action
+            MapInfo[] nearbyMapInfos = rc.senseNearbyMapInfos(1);
+            for (MapInfo mapInfo : nearbyMapInfos) {
+                if (rc.canFill(mapInfo.getMapLocation())) {
+                    rc.fill(mapInfo.getMapLocation());
+                }
             }
         }
     }
