@@ -2,10 +2,13 @@ package B;
 
 import battlecode.common.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
 import java.util.stream.Stream;
+
+import static battlecode.common.GlobalUpgrade.ATTACK;
 
 /**
  * RobotPlayer is the class that describes your main robot strategy.
@@ -28,6 +31,14 @@ public strictfp class RobotPlayer {
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
     static final Random rng = new Random();
+
+    static final int Spawn1LocationX = 1;
+    static final int Spawn1LocationY = 2;
+    static final int Spawn2LocationX = 3;
+    static final int Spawn2LocationY = 4;
+    static final int Spawn3LocationX = 5;
+    static final int Spawn3LocationY = 6;
+
 
     /**
      * Array containing all the possible movement directions.
@@ -72,17 +83,14 @@ public strictfp class RobotPlayer {
         // You can also use indicators to save debug notes in replays.
 //        rc.setIndicatorString("Hello world!");
 
+        storeEnemySpawn(rc);
+
         while (true) {
-            // This code runs during the entire lifespan of the robot, which is why it is in an infinite
-            // loop. If we ever leave this loop and return from run(), the robot dies! At the end of the
-            // loop, we call Clock.yield(), signifying that we've done everything we want to do.
+            turnCount += 1;
+            tryBuyGlobalUpgrade(rc); // only do every 600 turns
 
-            turnCount += 1;  // We have now been alive for one more turn!
 
-            // Try/catch blocks stop unhandled exceptions, which cause your robot to explode.
             try {
-                // Make sure you spawn your robot in before you attempt to take any actions!
-                // Robots not spawned in do not have vision of any tiles and cannot perform any actions.
                 if (!rc.isSpawned()) {
                     spawn(rc);
                 } else {
@@ -129,6 +137,44 @@ public strictfp class RobotPlayer {
         }
 
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
+    }
+
+    private static void tryBuyGlobalUpgrade(RobotController rc) throws GameActionException {
+        if (rc.canBuyGlobal(ATTACK)) {
+            rc.buyGlobal(ATTACK);
+        }
+    }
+
+    private static void storeEnemySpawn(RobotController rc) throws GameActionException {
+        // try to find the last known location of the dropped flags, if it's found and not stored, store it
+        MapLocation[] mapLocations = rc.senseBroadcastFlagLocations();
+        if (mapLocations.length < 1) {
+            return;
+        }
+
+        if (rc.readSharedArray(Spawn1LocationX) != 0
+                && rc.readSharedArray(Spawn1LocationY) != 0
+                && rc.readSharedArray(Spawn2LocationX) != 0
+        ) {
+            return;
+        }
+
+        for (MapLocation mapLocation : mapLocations) {
+            if (rc.readSharedArray(Spawn1LocationX) == 0 && rc.readSharedArray(Spawn1LocationY) == 0) {
+                rc.writeSharedArray(Spawn1LocationX, mapLocation.x);
+                rc.writeSharedArray(Spawn1LocationY, mapLocation.y);
+            } else if (rc.readSharedArray(Spawn2LocationX) == 0 && rc.readSharedArray(Spawn2LocationY) == 0) {
+                rc.writeSharedArray(Spawn2LocationX, mapLocation.x);
+                rc.writeSharedArray(Spawn2LocationY, mapLocation.y);
+            } else if (rc.readSharedArray(Spawn3LocationX) == 0 && rc.readSharedArray(Spawn3LocationY) == 0) {
+                rc.writeSharedArray(Spawn3LocationX, mapLocation.x);
+                rc.writeSharedArray(Spawn3LocationY, mapLocation.y);
+            }
+        }
+
+        System.out.println("spawn 1 " + rc.readSharedArray(Spawn1LocationX) + " " + rc.readSharedArray(Spawn1LocationY));
+        System.out.println("spawn 2 " + rc.readSharedArray(Spawn2LocationX) + " " + rc.readSharedArray(Spawn2LocationY));
+        System.out.println("spawn 3 " + rc.readSharedArray(Spawn3LocationX) + " " + rc.readSharedArray(Spawn3LocationY));
     }
 
     private static void hunt(RobotController rc) throws GameActionException {
@@ -251,14 +297,27 @@ public strictfp class RobotPlayer {
         }
     }
 
-    private static void moveToEnemySpawn(RobotController rc) throws GameActionException {
-//        MapLocation[] enemySpawnLocs = rc.getAllySpawnLocations()
-//        MapLocation firstLoc = enemySpawnLocs[0];
-//        moveTo(rc, firstLoc);
-        // TODO do something here!!!
+    private static void moveToEnemySpawn(RobotController rc) throws GameActionException {//        MapLocation[] enemySpawnLocs = rc.getAllySpawnLocations()
         rc.setIndicatorString("Moving to enemy spawn");
-//        if all else fails, random
-        random(rc);
+        // choose one of the 3 enemy spawn locations and move there
+
+        ArrayList<MapLocation> mapLocations = new ArrayList<>();
+        mapLocations.add(new MapLocation(rc.readSharedArray(Spawn1LocationX), rc.readSharedArray(Spawn1LocationY)));
+        mapLocations.add(new MapLocation(rc.readSharedArray(Spawn2LocationX), rc.readSharedArray(Spawn2LocationY)));
+        mapLocations.add(new MapLocation(rc.readSharedArray(Spawn3LocationX), rc.readSharedArray(Spawn3LocationY)));
+
+        MapLocation target = mapLocations.get(rng.nextInt(mapLocations.size()));
+
+        // take average location of all enemy spawn locations
+        int x = 0;
+        int y = 0;
+        for (MapLocation mapLocation : mapLocations) {
+            x += mapLocation.x;
+            y += mapLocation.y;
+        }
+        target = new MapLocation(x / mapLocations.size(), y / mapLocations.size());
+
+        moveTo(rc, target);
     }
 
     private static RobotInfo chooseHealTarget(RobotController rc, RobotInfo[] nearbyAllies) {
