@@ -330,14 +330,10 @@ public strictfp class RobotPlayer {
         if (enemyRobots.length > 0) {
             RobotInfo target = chooseAttackTarget(rc, enemyRobots);
             if (target != null) {
-                try {
-                    rc.attack(enemyRobots[0].getLocation());
-                    return;
-                } catch (GameActionException e) {
-                    // ignore
-                }
+                rc.attack(enemyRobots[0].getLocation());
+            } else {
+                moveTo(rc, enemyRobots[0].getLocation());
             }
-            moveTo(rc, enemyRobots[0].getLocation());
         }
     }
 
