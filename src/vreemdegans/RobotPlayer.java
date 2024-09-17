@@ -1,4 +1,4 @@
-package B;
+package vreemdegans;
 
 import battlecode.common.*;
 
