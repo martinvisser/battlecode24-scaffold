@@ -133,7 +133,8 @@ public strictfp class RobotPlayer {
 
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
     }
-    public static void updateEnemyRobots(RobotController rc) throws GameActionException{
+
+    private static void updateEnemyRobots(RobotController rc) throws GameActionException{
         // Sensing methods can be passed in a radius of -1 to automatically 
         // use the largest possible value.
         RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
