@@ -170,13 +170,10 @@ public strictfp class RobotPlayer {
         }
 
         // have a small chance of attacking if we are going for the flag and see an enemy
-        RobotInfo[] enemyRobots = rc.senseNearbyRobots(4, rc.getTeam().opponent());
-        if (enemyRobots.length > 0 && rng.nextInt() % 5 == 1) {
-            RobotInfo target = chooseAttackTarget(rc, enemyRobots);
-            if (target != null) {
-                rc.attack(enemyRobots[0].getLocation());
-            }
+        if (rng.nextInt() % 5 < 2) {
+            attackIfPossible(rc);
         }
+
 
         // Move towards the enemy flag.
         // check if i can see a flag, if not request latest general location of flags to target
@@ -194,6 +191,16 @@ public strictfp class RobotPlayer {
             }
 
             moveTo(rc, broadcastedFlags[0]);
+        }
+    }
+
+    private static void attackIfPossible(RobotController rc) throws GameActionException {
+        RobotInfo[] enemyRobots = rc.senseNearbyRobots(4, rc.getTeam().opponent());
+        if (enemyRobots.length > 0) {
+            RobotInfo target = chooseAttackTarget(rc, enemyRobots);
+            if (target != null) {
+                rc.attack(enemyRobots[0].getLocation());
+            }
         }
     }
 
