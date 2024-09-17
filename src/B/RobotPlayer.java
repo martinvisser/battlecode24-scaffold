@@ -54,17 +54,7 @@ public strictfp class RobotPlayer {
             Direction.NORTHWEST,
     };
 
-    enum Strategy {
-        RANDOM,
-        CAPTURE,
-        GO_HOME,
-        HUNT,
-    }
-
-    static Strategy strategy = Strategy.RANDOM;
-
-    static MapLocation closestSpawnLoc;
-    static Direction homeDir;
+    static Strategy strategy = Strategy.PREPARE;
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -97,8 +87,8 @@ public strictfp class RobotPlayer {
                     decide(rc);
 
                     switch (strategy) {
-                        case RANDOM:
-                            random(rc);
+                        case PREPARE:
+                            prepare(rc);
                             break;
                         case CAPTURE:
                             capture(rc);
@@ -137,6 +127,24 @@ public strictfp class RobotPlayer {
         }
 
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
+    }
+
+    static MapLocation closestSpawnLoc;
+    static Direction homeDir;
+
+    private static void decide(RobotController rc) throws GameActionException {
+        if (rc.getRoundNum() < GameConstants.SETUP_ROUNDS) {
+            strategy = Strategy.PREPARE;
+            return;
+        }
+
+        if (rc.hasFlag()) {
+            strategy = Strategy.GO_HOME;
+        } else {
+            strategy = Strategy.CAPTURE;
+        }
+
+        rc.setIndicatorString("strategy: " + strategy);
     }
 
     private static void tryBuyGlobalUpgrade(RobotController rc) throws GameActionException {
@@ -221,30 +229,11 @@ public strictfp class RobotPlayer {
         }
     }
 
-    private static void decide(RobotController rc) throws GameActionException {
-        if (rc.getRoundNum() < GameConstants.SETUP_ROUNDS) {
-            strategy = Strategy.RANDOM;
-            return;
-        }
-
-        if (rc.hasFlag()) {
-            strategy = Strategy.GO_HOME;
-        } else {
-            strategy = Strategy.CAPTURE;
-        }
-
-        rc.setIndicatorString("strategy: " + strategy);
-    }
-
-    private static void spawn(RobotController rc) throws GameActionException {
-        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-        // Pick a random spawn location to attempt spawning in.
-        MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
-        if (rc.canSpawn(randomLoc)) rc.spawn(randomLoc);
-    }
-
-    private static void random(RobotController rc) throws GameActionException {
+    private static void prepare(RobotController rc) throws GameActionException {
         // Move and attack randomly if no objective.
+        gotoCrumbIfPossible(rc);
+        moveToEnemySpawn(rc);
+
         Direction dir = directions[rng.nextInt(directions.length)];
         MapLocation nextLoc = rc.getLocation().add(dir);
         if (rc.canMove(dir)) {
@@ -257,6 +246,31 @@ public strictfp class RobotPlayer {
         MapLocation prevLoc = rc.getLocation().subtract(dir);
         if (rc.canBuild(TrapType.EXPLOSIVE, prevLoc) && rng.nextInt() % 37 == 1)
             rc.build(TrapType.EXPLOSIVE, prevLoc);
+    }
+
+    private static void spawn(RobotController rc) throws GameActionException {
+        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
+        // Pick a random spawn location to attempt spawning in.
+        MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
+        if (rc.canSpawn(randomLoc)) rc.spawn(randomLoc);
+    }
+
+    private static void moveTo(RobotController rc, MapLocation location) throws GameActionException {
+        Direction dir = rc.getLocation().directionTo(location);
+        rc.setIndicatorLine(rc.getLocation(), location, 0, 255, 0);
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+        } else if (rc.canFill(location)) {
+            rc.fill(location);
+        } else {
+            final Direction nextDirection = getNextDirection(dir, rc);
+            if (nextDirection != null) {
+                rc.move(nextDirection);
+            }
+
+            // if we are stuck, try to fill water or another land action
+            fillNearbyWithWater(rc);
+        }
     }
 
     private static void capture(RobotController rc) throws GameActionException {
@@ -350,20 +364,11 @@ public strictfp class RobotPlayer {
         return attackableRobots.min(Comparator.comparingInt(x -> x.getHealth())).orElse(null);
     }
 
-    private static void moveTo(RobotController rc, MapLocation location) throws GameActionException {
-        Direction dir = rc.getLocation().directionTo(location);
-        rc.setIndicatorLine(rc.getLocation(), location, 255, 0, 0);
-        if (rc.canMove(dir)) {
-            rc.move(dir);
-        } else {
-            final Direction nextDirection = getNextDirection(dir, rc);
-            if (nextDirection != null) {
-                rc.move(nextDirection);
-            }
-
-            // if we are stuck, try to fill water or another land action
-            fillNearbyWithWater(rc);
-        }
+    enum Strategy {
+        PREPARE,
+        CAPTURE,
+        GO_HOME,
+        HUNT,
     }
 
     private static void fillNearbyWithWater(RobotController rc) throws GameActionException {
