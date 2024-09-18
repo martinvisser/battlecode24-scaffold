@@ -6,7 +6,7 @@ import java.util.Random;
 
 import static battlecode.common.GlobalUpgrade.ATTACK;
 import static vreemdegans.Discovery.storeEnemySpawn;
-import static vreemdegans.Discovery.updateAllyFlagLocation;
+import static vreemdegans.Discovery.updateAllyFlagLocationAndHuntTarget;
 
 /**
  * RobotPlayer is the class that describes your main robot strategy.
@@ -93,16 +93,13 @@ public strictfp class RobotPlayer {
         while (true) {
             turnCount += 1;
             tryBuyGlobalUpgrade(rc); // only do every 600 turns
-            updateAllyFlagLocation(rc);
 
             try {
                 if (!rc.isSpawned()) {
                     spawn(rc);
                 } else {
+                    updateAllyFlagLocationAndHuntTarget(rc, turnCount);
                     pickStrategy(rc, alwaysStrategy);
-
-                    // We can also move our code into different methods or classes to better organize it!
-                    updateEnemyRobots(rc);
                 }
 
             } catch (GameActionException e) {
@@ -163,24 +160,5 @@ public strictfp class RobotPlayer {
         // Pick a random spawn location to attempt spawning in.
         MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
         if (rc.canSpawn(randomLoc)) rc.spawn(randomLoc);
-    }
-
-    private static void updateEnemyRobots(RobotController rc) throws GameActionException {
-        // Sensing methods can be passed in a radius of -1 to automatically
-        // use the largest possible value.
-        RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-        if (enemyRobots.length != 0) {
-//            rc.setIndicatorString("There are nearby enemy robots! Scary!");
-            // Save an array of locations with enemy robots in them for future use.
-            MapLocation[] enemyLocations = new MapLocation[enemyRobots.length];
-            for (int i = 0; i < enemyRobots.length; i++) {
-                enemyLocations[i] = enemyRobots[i].getLocation();
-            }
-            // Let the rest of our team know how many enemy robots we see!
-            if (rc.canWriteSharedArray(0, enemyRobots.length)) {
-                rc.writeSharedArray(0, enemyRobots.length);
-                int numEnemies = rc.readSharedArray(0);
-            }
-        }
     }
 }

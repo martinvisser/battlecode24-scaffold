@@ -1,7 +1,7 @@
 package vreemdegans;
 
+import battlecode.common.FlagInfo;
 import battlecode.common.GameActionException;
-import battlecode.common.MapInfo;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
@@ -21,22 +21,71 @@ class Discovery {
     static final int AllyFlag3LocationX = 13;
     static final int AllyFlag3LocationY = 14;
     static final int HidersCount = 15;
+    static final int LastChangedTurn = 16;
 
 
-    static void updateAllyFlagLocation(RobotController rc) throws GameActionException {
+    static void updateAllyFlagLocationAndHuntTarget(RobotController rc, int roundCount) throws GameActionException {
         MapLocation flag1Location = new MapLocation(rc.readSharedArray(AllyFlag1LocationX), rc.readSharedArray(AllyFlag1LocationY));
         MapLocation flag2Location = new MapLocation(rc.readSharedArray(AllyFlag2LocationX), rc.readSharedArray(AllyFlag2LocationY));
         MapLocation flag3Location = new MapLocation(rc.readSharedArray(AllyFlag3LocationX), rc.readSharedArray(AllyFlag3LocationY));
 
-        MapInfo[] nearby1MapInfos = rc.senseNearbyMapInfos(flag1Location);
-        for (MapInfo mapInfo : nearby1MapInfos) {
-            rc.canPickupFlag()
+        FlagInfo[] flagInfos = rc.senseNearbyFlags(-1, rc.getTeam());
+        // find the old location that is closest to the new location and update that one with the new one
+        // check at every point if it has actually changed and if so update the changed boolean
+        boolean changed = false;
+        MapLocation newHuntLocation = null;
+        for (FlagInfo flagInfo : flagInfos) {
+            if (
+                    (flag1Location.x == 0 && flag1Location.y == 0) ||
+                            (flagInfo.getLocation().distanceSquaredTo(flag1Location) < flagInfo.getLocation().distanceSquaredTo(flag2Location) &&
+                                    flagInfo.getLocation().distanceSquaredTo(flag1Location) < flagInfo.getLocation().distanceSquaredTo(flag3Location))
+            ) {
 
-            if (mapInfo) {
-                rc.writeSharedArray(AllyFlag1LocationX, mapInfo.getMapLocation().x);
-                rc.writeSharedArray(AllyFlag1LocationY, mapInfo.getMapLocation().y);
+                if (flag1Location.x != flagInfo.getLocation().x || flag1Location.y != flagInfo.getLocation().y) {
+                    rc.writeSharedArray(AllyFlag1LocationX, flagInfo.getLocation().x);
+                    rc.writeSharedArray(AllyFlag1LocationY, flagInfo.getLocation().y);
+                    changed = true;
+                    newHuntLocation = flagInfo.getLocation();
+                }
+            } else if ((flag2Location.x == 0 && flag2Location.y == 0) ||
+                    (flagInfo.getLocation().distanceSquaredTo(flag2Location) < flagInfo.getLocation().distanceSquaredTo(flag1Location)
+                            && flagInfo.getLocation().distanceSquaredTo(flag2Location) < flagInfo.getLocation().distanceSquaredTo(flag3Location))) {
+
+                if (flag2Location.x != flagInfo.getLocation().x || flag2Location.y != flagInfo.getLocation().y) {
+                    rc.writeSharedArray(AllyFlag2LocationX, flagInfo.getLocation().x);
+                    rc.writeSharedArray(AllyFlag2LocationY, flagInfo.getLocation().y);
+                    changed = true;
+                    newHuntLocation = flagInfo.getLocation();
+                }
+            } else if ((flag3Location.x == 0 && flag3Location.y == 0) ||
+                    (flagInfo.getLocation().distanceSquaredTo(flag3Location) < flagInfo.getLocation().distanceSquaredTo(flag1Location)
+                            && flagInfo.getLocation().distanceSquaredTo(flag3Location) < flagInfo.getLocation().distanceSquaredTo(flag2Location))) {
+                if (flag3Location.x != flagInfo.getLocation().x || flag3Location.y != flagInfo.getLocation().y) {
+                    rc.writeSharedArray(AllyFlag3LocationX, flagInfo.getLocation().x);
+                    rc.writeSharedArray(AllyFlag3LocationY, flagInfo.getLocation().y);
+                    changed = true;
+                    newHuntLocation = flagInfo.getLocation();
+                }
             }
         }
+
+        if (changed) {
+            rc.writeSharedArray(LastChangedTurn, roundCount);
+        }
+
+        if (changed && roundCount > 200) {
+            System.out.println("New hunt target: " + newHuntLocation);
+            rc.writeSharedArray(HunterTargetX, newHuntLocation.x);
+            rc.writeSharedArray(HunterTargetY, newHuntLocation.y);
+        }
+
+        // if we have not changed the target for a while, we can pick a new one
+        int turnsChangedAgo = roundCount - rc.readSharedArray(LastChangedTurn);
+        if (turnsChangedAgo > 10) {
+            rc.writeSharedArray(HunterTargetX, 0);
+            rc.writeSharedArray(HunterTargetY, 0);
+        }
+
     }
 
 

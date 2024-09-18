@@ -23,10 +23,12 @@ public class KillThemAllStrategy implements Strategy {
 
         gotoCrumbIfPossible(rc);
         attackIfPossible(rc);
+        moveToHuntIfPossible(rc);
         healIfPossible(rc);
         placeTrapIfPossible(rc);
         moveToEnemySpawn(rc);
     }
+
 
     private static RobotInfo chooseHealTarget(RobotController rc, RobotInfo[] nearbyAllies) {
         Stream<RobotInfo> healableRobots = Arrays.stream(nearbyAllies).filter(x -> rc.canHeal(x.getLocation()));

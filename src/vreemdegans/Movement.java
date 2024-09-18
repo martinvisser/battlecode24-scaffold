@@ -11,7 +11,7 @@ import static vreemdegans.RobotPlayer.rng;
 
 class Movement {
 
-     static void moveTo(RobotController rc, MapLocation location) throws GameActionException {
+    static void moveTo(RobotController rc, MapLocation location) throws GameActionException {
         Direction dir = rc.getLocation().directionTo(location);
         rc.setIndicatorLine(rc.getLocation(), location, 0, 255, 0);
         if (rc.canMove(dir)) {
@@ -23,9 +23,6 @@ class Movement {
             if (nextDirection != null) {
                 rc.move(nextDirection);
             }
-
-            // if we are stuck, try to fill water or another land action
-            fillNearbyWithWater(rc);
         }
     }
 
@@ -75,7 +72,6 @@ class Movement {
     }
 
     static void moveToEnemySpawn(RobotController rc) throws GameActionException {//        MapLocation[] enemySpawnLocs = rc.getAllySpawnLocations()
-        rc.setIndicatorString("Moving to enemy spawn");
         // choose one of the 3 enemy spawn locations and move there
 
         ArrayList<MapLocation> mapLocations = new ArrayList<>();
@@ -86,5 +82,16 @@ class Movement {
         MapLocation target = mapLocations.get(rng.nextInt(mapLocations.size()));
 
         moveTo(rc, target);
+    }
+
+    static void moveToHuntIfPossible(RobotController rc) throws GameActionException {
+        if (rc.readSharedArray(HunterTargetX) != 0 && rc.readSharedArray(HunterTargetY) != 0) {
+            MapLocation target = new MapLocation(rc.readSharedArray(HunterTargetX), rc.readSharedArray(HunterTargetY));
+            try {
+                moveTo(rc, target);
+            } catch (GameActionException e) {
+                // ignore
+            }
+        }
     }
 }
