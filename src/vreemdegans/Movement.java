@@ -62,6 +62,25 @@ class Movement {
         }
     }
 
+    static void randomMove(RobotController rc) throws GameActionException {
+        Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+        }
+    }
+
+    static void exploreMove(RobotController rc) throws GameActionException {
+        // move towards an area that brings you as far as possible from the closest few allies
+        RobotInfo[] nearbyAllies = rc.senseNearbyRobots(-1, rc.getTeam());
+        if (nearbyAllies.length > 0) {
+            MapLocation closestAlly = Arrays.stream(nearbyAllies).min(Comparator.comparingInt(x -> rc.getLocation().distanceSquaredTo(x.getLocation()))).orElse(null).getLocation();
+            Direction dir = rc.getLocation().directionTo(closestAlly).opposite();
+            if (rc.canMove(dir)) {
+                rc.move(dir);
+            }
+        }
+    }
+
 
     static void moveToEnemySpawn(RobotController rc) throws GameActionException {//        MapLocation[] enemySpawnLocs = rc.getAllySpawnLocations()
         // choose one of the 3 enemy spawn locations and move there

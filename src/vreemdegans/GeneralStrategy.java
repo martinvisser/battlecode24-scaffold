@@ -63,7 +63,7 @@ public class GeneralStrategy implements Strategy {
     }
 
     @Override
-    public void execute(RobotController rc) throws GameActionException {
+    public void execute(RobotController rc, int turnCounter) throws GameActionException {
         // check if we can get some bread
         // check if i'm around a lot of damaged allies, if so do a heal
         // if not, search for enemies and attack them

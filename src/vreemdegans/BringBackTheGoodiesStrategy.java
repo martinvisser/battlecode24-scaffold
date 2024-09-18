@@ -11,7 +11,7 @@ import static vreemdegans.Movement.moveTo;
 
 public class BringBackTheGoodiesStrategy implements Strategy {
     @Override
-    public void execute(RobotController rc) throws GameActionException {
+    public void execute(RobotController rc, int turnCounter) throws GameActionException {
         MapLocation[] spawnLocs = rc.getAllySpawnLocations();
         MapLocation currentLocation = rc.getLocation();
         if (RobotPlayer.closestSpawnLoc == null) {

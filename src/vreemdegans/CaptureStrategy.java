@@ -12,17 +12,17 @@ import static vreemdegans.Movement.moveTo;
 
 public class CaptureStrategy implements Strategy {
     @Override
-    public void execute(RobotController rc) throws GameActionException {
+    public void execute(RobotController rc, int turnCounter) throws GameActionException {
         if (rc.canPickupFlag(rc.getLocation())) {
             rc.pickupFlag(rc.getLocation());
             rc.setIndicatorString("Holding a flag!");
 
-            RobotPlayer.Strategies.GO_HOME.execute(rc);
+            RobotPlayer.Strategies.GO_HOME.execute(rc, turnCounter);
             return;
         }
 
         // have a small chance of attacking if we are going for the flag and see an enemy
-        if (RobotPlayer.rng.nextInt() % 5 < 2) {
+        if (RobotPlayer.rng.nextInt() % 5 < 3) {
             attackIfPossible(rc);
         }
 
@@ -40,7 +40,7 @@ public class CaptureStrategy implements Strategy {
         } else {
             MapLocation[] broadcastedFlags = rc.senseBroadcastFlagLocations();
             if (broadcastedFlags.length == 0) {
-                RobotPlayer.Strategies.HUNT.execute(rc);
+                RobotPlayer.Strategies.HUNT.execute(rc, turnCounter);
                 return;
             }
 

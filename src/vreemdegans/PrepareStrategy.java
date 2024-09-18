@@ -2,14 +2,20 @@ package vreemdegans;
 
 import battlecode.common.*;
 
-import static vreemdegans.Movement.gotoCrumbIfPossible;
-import static vreemdegans.Movement.moveToEnemySpawn;
+import static vreemdegans.Movement.*;
 
 public class PrepareStrategy implements Strategy {
     @Override
-    public void execute(RobotController rc) throws GameActionException {
+    public void execute(RobotController rc, int turnCounter) throws GameActionException {
         // Move and attack randomly if no objective.
         gotoCrumbIfPossible(rc);
+
+        // last 50 turns, start preparing
+        if (turnCounter <= 150) {
+            exploreMove(rc);
+            randomMove(rc);
+        }
+
         moveToEnemySpawn(rc);
 
         Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];

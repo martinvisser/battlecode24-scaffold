@@ -73,7 +73,7 @@ public strictfp class RobotPlayer {
                     spawn(rc);
                 } else {
                     updateAllyFlagLocationAndHuntTarget(rc, turnCount);
-                    pickStrategy(rc, alwaysStrategy);
+                    pickStrategy(rc, alwaysStrategy, turnCount);
                 }
 
             } catch (GameActionException e) {
@@ -100,29 +100,9 @@ public strictfp class RobotPlayer {
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
     }
 
-    enum Strategies {
-        PREPARE(new PrepareStrategy()),
-        CAPTURE(new CaptureStrategy()),
-        GO_HOME(new BringBackTheGoodiesStrategy()),
-        HUNT(new GeneralStrategy());
-
-        private final Strategy strategy;
-
-        Strategies(Strategy strategy) {
-            this.strategy = strategy;
-        }
-
-        void execute(RobotController rc) throws GameActionException {
-            strategy.execute(rc);
-        }
-    }
-
-    static MapLocation closestSpawnLoc;
-    static Direction homeDir;
-
-    private static void pickStrategy(RobotController rc, Strategy alwaysStrategy) throws GameActionException {
+    private static void pickStrategy(RobotController rc, Strategy alwaysStrategy, int turnCount) throws GameActionException {
         if (alwaysStrategy != null) {
-            alwaysStrategy.execute(rc);
+            alwaysStrategy.execute(rc, turnCount);
             return;
         }
 
@@ -137,7 +117,27 @@ public strictfp class RobotPlayer {
 
         rc.setIndicatorString("strategy: " + strategy);
 
-        strategy.execute(rc);
+        strategy.execute(rc, turnCount);
+    }
+
+    static MapLocation closestSpawnLoc;
+    static Direction homeDir;
+
+    enum Strategies {
+        PREPARE(new PrepareStrategy()),
+        CAPTURE(new CaptureStrategy()),
+        GO_HOME(new BringBackTheGoodiesStrategy()),
+        HUNT(new GeneralStrategy());
+
+        private final Strategy strategy;
+
+        Strategies(Strategy strategy) {
+            this.strategy = strategy;
+        }
+
+        void execute(RobotController rc, int turnCount) throws GameActionException {
+            strategy.execute(rc, turnCount);
+        }
     }
 
     private static void tryBuyGlobalUpgrade(RobotController rc) throws GameActionException {
