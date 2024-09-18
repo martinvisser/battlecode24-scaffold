@@ -26,7 +26,7 @@ public class BuilderStrategy implements Strategy {
         for (MapInfo location : rc.senseNearbyMapInfos(2)) {
             if (location.getTrapType() == TrapType.NONE) {
                 for (MapLocation flag : flags) {
-                    if (location.getMapLocation().distanceSquaredTo(flag) <= 5) {
+                    if (location.getMapLocation().distanceSquaredTo(flag) <= 8) {
                         if (rc.canBuild(targetTraptype, location.getMapLocation())) {
                             rc.build(targetTraptype, location.getMapLocation());
                             return;

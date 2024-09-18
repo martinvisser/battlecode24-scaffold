@@ -24,6 +24,7 @@ class Movement {
         } else {
             moveToNext(dir, rc, 0);
         }
+        fillNearbyWithWater(rc);
     }
 
     static void fillNearbyWithWater(RobotController rc) throws GameActionException {
@@ -114,11 +115,9 @@ class Movement {
 
         // randomize the flag location a bit
         if (closestFlag != null) {
-            int dx = rng.nextInt(3);
-            int dy = rng.nextInt(3);
-            int dxMinus = rng.nextInt(3);
-            int dyMinus = rng.nextInt(3);
-            closestFlag = new MapLocation(closestFlag.x + dx - dxMinus, closestFlag.y + dy - dyMinus);
+            int dx = rng.nextInt(7) - 3;
+            int dy = rng.nextInt(7) - 3;
+            closestFlag = new MapLocation(closestFlag.x + dx, closestFlag.y + dy);
         }
 
         if (closestFlag != null) {
