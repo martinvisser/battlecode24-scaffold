@@ -22,8 +22,8 @@ public class KillThemAllStrategy implements Strategy {
         rc.setIndicatorString("Hunting");
 
         gotoCrumbIfPossible(rc);
-        healIfPossible(rc);
         attackIfPossible(rc);
+        healIfPossible(rc);
         placeTrapIfPossible(rc);
         moveToEnemySpawn(rc);
     }

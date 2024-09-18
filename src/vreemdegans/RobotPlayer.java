@@ -27,7 +27,7 @@ public strictfp class RobotPlayer {
      * import at the top of this file. Here, we *seed* the RNG with a constant number (6147); this makes sure
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
-    static final Random rng = new Random(1337);
+    static final Random rng = new Random();
 
     /**
      * Array containing all the possible movement directions.
@@ -77,6 +77,16 @@ public strictfp class RobotPlayer {
 
         storeEnemySpawn(rc);
 
+
+        Strategy alwaysStrategy = null;
+
+        if (rng.nextInt(10) == 1) { // 10% chance to hunt
+            alwaysStrategy = new KillThemAllStrategy();
+            System.out.println("Hunter");
+            rc.setIndicatorString("Hunter");
+        }
+
+
         while (true) {
             turnCount += 1;
             tryBuyGlobalUpgrade(rc); // only do every 600 turns
@@ -85,7 +95,7 @@ public strictfp class RobotPlayer {
                 if (!rc.isSpawned()) {
                     spawn(rc);
                 } else {
-                    decide(rc);
+                    decide(rc, alwaysStrategy);
 
                     // We can also move our code into different methods or classes to better organize it!
                     updateEnemyRobots(rc);
@@ -118,7 +128,12 @@ public strictfp class RobotPlayer {
     static MapLocation closestSpawnLoc;
     static Direction homeDir;
 
-    private static void decide(RobotController rc) throws GameActionException {
+    private static void decide(RobotController rc, Strategy alwaysStrategy) throws GameActionException {
+        if (alwaysStrategy != null) {
+            alwaysStrategy.execute(rc);
+            return;
+        }
+
         if (rc.getRoundNum() < GameConstants.SETUP_ROUNDS) {
             strategy = Strategies.PREPARE;
         } else if (rc.hasFlag()) {

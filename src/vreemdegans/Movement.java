@@ -85,15 +85,6 @@ class Movement {
 
         MapLocation target = mapLocations.get(rng.nextInt(mapLocations.size()));
 
-        // take average location of all enemy spawn locations
-        int x = 0;
-        int y = 0;
-        for (MapLocation mapLocation : mapLocations) {
-            x += mapLocation.x;
-            y += mapLocation.y;
-        }
-        target = new MapLocation(x / mapLocations.size(), y / mapLocations.size());
-
         moveTo(rc, target);
     }
 }
