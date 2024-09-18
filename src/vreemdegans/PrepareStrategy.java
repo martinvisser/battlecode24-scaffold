@@ -1,6 +1,9 @@
 package vreemdegans;
 
-import battlecode.common.*;
+import battlecode.common.Direction;
+import battlecode.common.GameActionException;
+import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
 
 import static vreemdegans.Movement.*;
 
@@ -19,16 +22,10 @@ public class PrepareStrategy implements Strategy {
         moveToEnemySpawn(rc);
 
         Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
-        MapLocation nextLoc = rc.getLocation().add(dir);
-        if (rc.canMove(dir)) {
-            rc.move(dir);
-        } else if (rc.canAttack(nextLoc)) {
-            rc.attack(nextLoc);
-        }
 
         // Rarely attempt placing traps behind the robot.
         MapLocation prevLoc = rc.getLocation().subtract(dir);
-        if (rc.canBuild(TrapType.EXPLOSIVE, prevLoc) && RobotPlayer.rng.nextInt() % 37 == 1)
-            rc.build(TrapType.EXPLOSIVE, prevLoc);
+//        if (rc.canBuild(TrapType.EXPLOSIVE, prevLoc) && RobotPlayer.rng.nextInt() % 37 == 1)
+//            rc.build(TrapType.EXPLOSIVE, prevLoc);
     }
 }

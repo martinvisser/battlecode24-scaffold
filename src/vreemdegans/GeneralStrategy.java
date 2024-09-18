@@ -42,9 +42,10 @@ public class GeneralStrategy implements Strategy {
                 } catch (GameActionException e) {
                     // ignore
                 }
-            } else {
-                moveTo(rc, enemyRobots[0].getLocation());
             }
+//            else {
+//                moveTo(rc, enemyRobots[0].getLocation());
+//            }
         }
     }
 

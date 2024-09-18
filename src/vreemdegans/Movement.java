@@ -14,14 +14,28 @@ class Movement {
     static void moveTo(RobotController rc, MapLocation location) throws GameActionException {
         Direction dir = rc.getLocation().directionTo(location);
         rc.setIndicatorLine(rc.getLocation(), location, 0, 255, 0);
+
         if (rc.canMove(dir)) {
             rc.move(dir);
         } else if (rc.canFill(location)) {
             rc.fill(location);
         } else {
-            final Direction nextDirection = getNextDirection(dir, rc);
-            if (nextDirection != null) {
-                rc.move(nextDirection);
+            fillNearbyWithWater(rc);
+        }
+
+
+        final Direction nextDirection = getNextDirection(dir, rc);
+        if (nextDirection != null) {
+            rc.move(nextDirection);
+        }
+
+    }
+
+    static void fillNearbyWithWater(RobotController rc) throws GameActionException {
+        MapInfo[] nearbyMapInfos = rc.senseNearbyMapInfos(1);
+        for (MapInfo mapInfo : nearbyMapInfos) {
+            if (rc.canFill(mapInfo.getMapLocation())) {
+                rc.fill(mapInfo.getMapLocation());
             }
         }
     }

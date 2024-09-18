@@ -28,7 +28,7 @@ public class CaptureStrategy implements Strategy {
 
         // Move towards the enemy flag.
         // check if i can see a flag, if not request latest general location of flags to target
-        FlagInfo[] enemyFlags = rc.senseNearbyFlags(1000, rc.getTeam().opponent());
+        FlagInfo[] enemyFlags = rc.senseNearbyFlags(-1, rc.getTeam().opponent());
 
         // filter out picked up flags
         enemyFlags = Arrays.stream(enemyFlags).filter(x -> !x.isPickedUp()).toArray(FlagInfo[]::new);
