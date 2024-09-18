@@ -8,7 +8,6 @@ enum ActiveStrategy {
     CAPTURE(new CaptureStrategy()),
     GO_HOME(new BringBackTheGoodiesStrategy()),
     SUPER_HUNT(new SuperHunterStrategy()),
-    HIDE_THE_FLAG(new HideTheFlagStrategy()),
     GENERIC(new GeneralStrategy()),
     BUILD(new BuilderStrategy());
 

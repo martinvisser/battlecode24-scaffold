@@ -22,7 +22,7 @@ class Movement {
         } else if (rc.canFill(location)) {
             rc.fill(location);
         } else {
-            moveToNext(dir, rc, 0);
+            moveToNext(dir, rc);
         }
         fillNearbyWithWater(rc);
     }
@@ -36,8 +36,8 @@ class Movement {
         }
     }
 
-    private static void moveToNext(Direction current, RobotController rc, int attempts) throws GameActionException {
-        final Direction nextDirection = findDirection(current, rc, attempts);
+    private static void moveToNext(Direction current, RobotController rc) throws GameActionException {
+        final Direction nextDirection = findDirection(current, rc, 0);
         if (nextDirection != null) rc.move(nextDirection);
         else Movement.randomMove(rc);
     }
@@ -45,9 +45,11 @@ class Movement {
     private static Direction findDirection(Direction current, RobotController rc, int attempts) throws GameActionException {
         if (attempts < Direction.allDirections().length) {
             Direction nextDirection = current.rotateRight();
-            final MapLocation newLocation = rc.getLocation().add(nextDirection).add(nextDirection);
-            if (rc.onTheMap(newLocation) && rc.sensePassability(newLocation) && rc.canMove(nextDirection)) {
-                return nextDirection;
+            if (nextDirection != current) {
+                final MapLocation newLocation = rc.getLocation().add(nextDirection).add(nextDirection);
+                if (rc.onTheMap(newLocation) && rc.sensePassability(newLocation) && rc.canMove(nextDirection)) {
+                    return nextDirection;
+                }
             }
             return findDirection(nextDirection, rc, attempts + 1);
         }

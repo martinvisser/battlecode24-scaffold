@@ -46,7 +46,6 @@ public strictfp class RobotPlayer {
     };
 
     static ActiveStrategy activeStrategy = PREPARE;
-    static boolean isHider = false;
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -119,11 +118,7 @@ public strictfp class RobotPlayer {
         }
 
         if (rc.getRoundNum() < GameConstants.SETUP_ROUNDS) {
-            if (isHider) {
-                activeStrategy = HIDE_THE_FLAG;
-            } else {
-                activeStrategy = PREPARE;
-            }
+            activeStrategy = PREPARE;
         } else if (rc.hasFlag()) {
             activeStrategy = GO_HOME;
         } else {

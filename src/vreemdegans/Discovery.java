@@ -24,7 +24,6 @@ class Discovery {
     static final int AllyFlag2LocationY = 12;
     static final int AllyFlag3LocationX = 13;
     static final int AllyFlag3LocationY = 14;
-    static final int Hiders = 15;
     static final int LastChangedTurn = 16;
     static final int BuildersCount = 17;
 
