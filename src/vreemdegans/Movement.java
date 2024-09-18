@@ -134,7 +134,19 @@ class Movement {
     static void moveToOurFlag(RobotController rc) throws GameActionException {
         ArrayList<MapLocation> flags = alliedFlags(rc);
         // find the closest flag and move there
-        MapLocation closestFlag = flags.stream().min(Comparator.comparingInt(x -> rc.getLocation().distanceSquaredTo(x))).orElse(null);
+        MapLocation closestFlag = flags.stream().min(
+                Comparator.comparingInt(x -> rc.getLocation().distanceSquaredTo(x))
+        ).orElse(null);
+
+        // randomize the flag location a bit
+        if (closestFlag != null) {
+            int dx = rng.nextInt(3);
+            int dy = rng.nextInt(3);
+            int dxMinus = rng.nextInt(3);
+            int dyMinus = rng.nextInt(3);
+            closestFlag = new MapLocation(closestFlag.x + dx - dxMinus, closestFlag.y + dy - dyMinus);
+        }
+
         if (closestFlag != null) {
             moveTo(rc, closestFlag);
         }
