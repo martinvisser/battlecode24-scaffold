@@ -49,14 +49,16 @@ public strictfp class RobotPlayer {
         GO_HOME(new BringBackTheGoodiesStrategy()),
         HUNT(new KillThemAllStrategy());
 
-        final Strategy strategy;
+        private final Strategy strategy;
 
         Strategies(Strategy strategy) {
             this.strategy = strategy;
         }
-    }
 
-    static Strategies strategy = Strategies.PREPARE;
+        void execute(RobotController rc) throws GameActionException {
+            strategy.execute(rc);
+        }
+    }
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -95,7 +97,7 @@ public strictfp class RobotPlayer {
                 if (!rc.isSpawned()) {
                     spawn(rc);
                 } else {
-                    decide(rc, alwaysStrategy);
+                    pickStrategy(rc, alwaysStrategy);
 
                     // We can also move our code into different methods or classes to better organize it!
                     updateEnemyRobots(rc);
@@ -128,12 +130,13 @@ public strictfp class RobotPlayer {
     static MapLocation closestSpawnLoc;
     static Direction homeDir;
 
-    private static void decide(RobotController rc, Strategy alwaysStrategy) throws GameActionException {
+    private static void pickStrategy(RobotController rc, Strategy alwaysStrategy) throws GameActionException {
         if (alwaysStrategy != null) {
             alwaysStrategy.execute(rc);
             return;
         }
 
+        Strategies strategy;
         if (rc.getRoundNum() < GameConstants.SETUP_ROUNDS) {
             strategy = Strategies.PREPARE;
         } else if (rc.hasFlag()) {
@@ -144,7 +147,7 @@ public strictfp class RobotPlayer {
 
         rc.setIndicatorString("strategy: " + strategy);
 
-        strategy.strategy.execute(rc);
+        strategy.execute(rc);
     }
 
     private static void tryBuyGlobalUpgrade(RobotController rc) throws GameActionException {
