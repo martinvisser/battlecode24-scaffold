@@ -5,7 +5,8 @@ import battlecode.common.*;
 import java.util.Random;
 
 import static battlecode.common.GlobalUpgrade.ATTACK;
-import static vreemdegans.DiscoverEnemies.storeEnemySpawn;
+import static vreemdegans.Discovery.storeEnemySpawn;
+import static vreemdegans.Discovery.updateAllyFlagLocation;
 
 /**
  * RobotPlayer is the class that describes your main robot strategy.
@@ -90,6 +91,7 @@ public strictfp class RobotPlayer {
         while (true) {
             turnCount += 1;
             tryBuyGlobalUpgrade(rc); // only do every 600 turns
+            updateAllyFlagLocation(rc);
 
             try {
                 if (!rc.isSpawned()) {

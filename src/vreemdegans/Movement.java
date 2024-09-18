@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import static vreemdegans.DiscoverEnemies.*;
+import static vreemdegans.Discovery.*;
 import static vreemdegans.RobotPlayer.rng;
 
 class Movement {
@@ -79,9 +79,9 @@ class Movement {
         // choose one of the 3 enemy spawn locations and move there
 
         ArrayList<MapLocation> mapLocations = new ArrayList<>();
-        mapLocations.add(new MapLocation(rc.readSharedArray(Spawn1LocationX), rc.readSharedArray(Spawn1LocationY)));
-        mapLocations.add(new MapLocation(rc.readSharedArray(Spawn2LocationX), rc.readSharedArray(Spawn2LocationY)));
-        mapLocations.add(new MapLocation(rc.readSharedArray(Spawn3LocationX), rc.readSharedArray(Spawn3LocationY)));
+        mapLocations.add(new MapLocation(rc.readSharedArray(EnemySpawn1LocationX), rc.readSharedArray(EnemySpawn1LocationY)));
+        mapLocations.add(new MapLocation(rc.readSharedArray(EnemySpawn2LocationX), rc.readSharedArray(EnemySpawn2LocationY)));
+        mapLocations.add(new MapLocation(rc.readSharedArray(EnemySpawn3LocationX), rc.readSharedArray(EnemySpawn3LocationY)));
 
         MapLocation target = mapLocations.get(rng.nextInt(mapLocations.size()));
 
