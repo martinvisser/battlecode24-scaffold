@@ -5,6 +5,7 @@ import battlecode.common.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 import static vreemdegans.Discovery.*;
 import static vreemdegans.RobotPlayer.directions;
@@ -16,30 +17,12 @@ class Movement {
         Direction dir = rc.getLocation().directionTo(location);
         rc.setIndicatorLine(rc.getLocation(), location, 0, 255, 0);
 
-//        // RobotPlayer.lastDirections contains less than 2, add the direction
-//        // Otherwise remove the first element and add the new direction
-//        if (RobotPlayer.lastDirections.size() < 2) {
-//            RobotPlayer.lastDirections.add(dir);
-//        } else {
-//            RobotPlayer.lastDirections.remove();
-//            RobotPlayer.lastDirections.add(dir);
-//        }
-//
-//        Direction newDir = Arrays.stream(directions)
-//                .filter(d -> RobotPlayer.lastDirections.stream().noneMatch(ld -> ld == d))
-//                .filter(d -> rc.canMove(d))
-//                .findAny()
-//                .orElse(dir);
-
         if (rc.canMove(dir)) {
             rc.move(dir);
         } else if (rc.canFill(location)) {
             rc.fill(location);
         } else {
-            final Direction nextDirection = getNextDirection(dir, rc);
-            if (nextDirection != null) {
-                rc.move(nextDirection);
-            }
+            moveToNext(dir, rc, 0);
         }
     }
 
@@ -52,31 +35,22 @@ class Movement {
         }
     }
 
-    private static Direction getNextDirection(Direction current, RobotController rc) throws GameActionException {
-        if (rc.canMove(current.rotateRight())) {
-            return current.rotateRight();
-        } else if (rc.canMove(current.rotateRight().rotateRight())) {
-            return current.rotateRight().rotateRight();
-        } else if (rc.canMove(current.rotateRight().rotateRight().rotateRight())) {
-            return current.rotateRight().rotateRight().rotateRight();
-        } else if (rc.canMove(current.rotateLeft())) {
-            return current.rotateLeft();
-        } else if (rc.canMove(current.rotateLeft().rotateLeft())) {
-            return current.rotateLeft().rotateLeft();
-        } else if (rc.canMove(current.rotateLeft().rotateLeft().rotateLeft())) {
-            return current.rotateLeft().rotateLeft().rotateLeft();
-        } else if (rc.canMove(current.opposite())) {
-            return current.opposite();
-        } else {
-            final MapInfo[] a = rc.senseNearbyMapInfos(2);
-            return Arrays.stream(a)
-                    .filter(mapInfo -> mapInfo.isPassable())
-                    .map(mapInfo -> rc.getLocation().directionTo(mapInfo.getMapLocation()))
-                    .filter(dir -> dir != current)
-                    .filter(dir -> rc.canMove(dir))
-                    .findAny()
-                    .orElse(null);
+    private static void moveToNext(Direction current, RobotController rc, int attempts) throws GameActionException {
+        final Direction nextDirection = findDirection(current, rc, attempts);
+        if (nextDirection != null) rc.move(nextDirection);
+        else Movement.randomMove(rc);
+    }
+
+    private static Direction findDirection(Direction current, RobotController rc, int attempts) throws GameActionException {
+        if (attempts < Direction.allDirections().length) {
+            Direction nextDirection = current.rotateRight();
+            final MapLocation newLocation = rc.getLocation().add(nextDirection).add(nextDirection);
+            if (rc.onTheMap(newLocation) && rc.sensePassability(newLocation) && rc.canMove(nextDirection)) {
+                return nextDirection;
+            }
+            return findDirection(nextDirection, rc, attempts + 1);
         }
+        return null;
     }
 
     static void gotoCrumbIfPossible(RobotController rc) throws GameActionException {
@@ -110,7 +84,7 @@ class Movement {
     static void moveToEnemySpawn(RobotController rc) throws GameActionException {//        MapLocation[] enemySpawnLocs = rc.getAllySpawnLocations()
         // choose one of the 3 enemy spawn locations and move there
 
-        ArrayList<MapLocation> mapLocations = new ArrayList<>();
+        List<MapLocation> mapLocations = new ArrayList<>();
         mapLocations.add(new MapLocation(rc.readSharedArray(EnemySpawn1LocationX), rc.readSharedArray(EnemySpawn1LocationY)));
         mapLocations.add(new MapLocation(rc.readSharedArray(EnemySpawn2LocationX), rc.readSharedArray(EnemySpawn2LocationY)));
         mapLocations.add(new MapLocation(rc.readSharedArray(EnemySpawn3LocationX), rc.readSharedArray(EnemySpawn3LocationY)));

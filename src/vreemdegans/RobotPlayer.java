@@ -2,9 +2,7 @@ package vreemdegans;
 
 import battlecode.common.*;
 
-import java.util.ArrayDeque;
-import java.util.Queue;
-import java.util.Random;
+import java.util.*;
 
 import static battlecode.common.GlobalUpgrade.ATTACK;
 import static vreemdegans.ActiveStrategy.*;
@@ -49,7 +47,6 @@ public strictfp class RobotPlayer {
 
     static ActiveStrategy activeStrategy = PREPARE;
     static boolean isHider = false;
-    static Queue<Direction> lastDirections = new ArrayDeque<>(2);
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
