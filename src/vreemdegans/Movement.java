@@ -62,14 +62,6 @@ class Movement {
         }
     }
 
-    static void fillNearbyWithWater(RobotController rc) throws GameActionException {
-        MapInfo[] nearbyMapInfos = rc.senseNearbyMapInfos(1);
-        for (MapInfo mapInfo : nearbyMapInfos) {
-            if (rc.canFill(mapInfo.getMapLocation())) {
-                rc.fill(mapInfo.getMapLocation());
-            }
-        }
-    }
 
     static void moveToEnemySpawn(RobotController rc) throws GameActionException {//        MapLocation[] enemySpawnLocs = rc.getAllySpawnLocations()
         // choose one of the 3 enemy spawn locations and move there

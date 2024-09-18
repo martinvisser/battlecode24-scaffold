@@ -3,7 +3,6 @@ package vreemdegans;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import battlecode.common.TrapType;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -11,22 +10,18 @@ import java.util.stream.Stream;
 
 import static vreemdegans.Movement.*;
 
-public class KillThemAllStrategy implements Strategy {
-    @Override
-    public void execute(RobotController rc) throws GameActionException {
-        // check if we can get some bread
-        // check if i'm around a lot of damaged allies, if so do a heal
-        // if not, search for enemies and attack them
-        // if none found nearby move towards enemy spawn point
+public class GeneralStrategy implements Strategy {
+    private static RobotInfo chooseAttackTarget(RobotController rc, RobotInfo[] enemyRobots) {
+        RobotInfo[] attackableRobots = Arrays.stream(enemyRobots).filter(x -> rc.canAttack(x.getLocation())).toArray(RobotInfo[]::new);
 
-        rc.setIndicatorString("Hunting");
+        // if anybody has the flag, target him!
+        RobotInfo flagHolder = Arrays.stream(attackableRobots).filter(x -> x.hasFlag()).findFirst().orElse(null);
+        if (flagHolder != null) {
+            return flagHolder;
+        }
 
-        gotoCrumbIfPossible(rc);
-        attackIfPossible(rc);
-        moveToHuntIfPossible(rc);
-        healIfPossible(rc);
-        placeTrapIfPossible(rc);
-        moveToEnemySpawn(rc);
+        // sort them by health and return lowest one
+        return Arrays.stream(attackableRobots).min(Comparator.comparingInt(x -> x.getHealth())).orElse(null);
     }
 
 
@@ -53,20 +48,7 @@ public class KillThemAllStrategy implements Strategy {
         }
     }
 
-    private static RobotInfo chooseAttackTarget(RobotController rc, RobotInfo[] enemyRobots) {
-        Stream<RobotInfo> attackableRobots = Arrays.stream(enemyRobots).filter(x -> rc.canAttack(x.getLocation()));
-        // sort them by health and return lowest one
-
-        return attackableRobots.min(Comparator.comparingInt(x -> x.getHealth())).orElse(null);
-    }
-
-    private static void placeTrapIfPossible(RobotController rc) throws GameActionException {
-        if (rc.canBuild(TrapType.EXPLOSIVE, rc.getLocation())) {
-            rc.build(TrapType.EXPLOSIVE, rc.getLocation());
-        }
-    }
-
-    private static void healIfPossible(RobotController rc) throws GameActionException {
+    public static void healIfPossible(RobotController rc) throws GameActionException {
         RobotInfo[] nearbyAllies = rc.senseNearbyRobots(4, rc.getTeam());
         if (nearbyAllies.length > 0) {
             RobotInfo target = chooseHealTarget(rc, nearbyAllies);
@@ -78,5 +60,21 @@ public class KillThemAllStrategy implements Strategy {
                 }
             }
         }
+    }
+
+    @Override
+    public void execute(RobotController rc) throws GameActionException {
+        // check if we can get some bread
+        // check if i'm around a lot of damaged allies, if so do a heal
+        // if not, search for enemies and attack them
+        // if none found nearby move towards enemy spawn point
+
+        rc.setIndicatorString("General");
+
+        gotoCrumbIfPossible(rc);
+        attackIfPossible(rc);
+        moveToHuntIfPossible(rc);
+        healIfPossible(rc);
+        moveToEnemySpawn(rc);
     }
 }

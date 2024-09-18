@@ -74,14 +74,14 @@ class Discovery {
         }
 
         if (changed && roundCount > 200) {
-            System.out.println("New hunt target: " + newHuntLocation);
+//            System.out.println("New hunt target: " + newHuntLocation);
             rc.writeSharedArray(HunterTargetX, newHuntLocation.x);
             rc.writeSharedArray(HunterTargetY, newHuntLocation.y);
         }
 
         // if we have not changed the target for a while, we can pick a new one
         int turnsChangedAgo = roundCount - rc.readSharedArray(LastChangedTurn);
-        if (turnsChangedAgo > 10) {
+        if (turnsChangedAgo > 3) {
             rc.writeSharedArray(HunterTargetX, 0);
             rc.writeSharedArray(HunterTargetY, 0);
         }

@@ -7,7 +7,7 @@ import battlecode.common.RobotController;
 
 import java.util.Arrays;
 
-import static vreemdegans.KillThemAllStrategy.attackIfPossible;
+import static vreemdegans.GeneralStrategy.attackIfPossible;
 import static vreemdegans.Movement.moveTo;
 
 public class CaptureStrategy implements Strategy {

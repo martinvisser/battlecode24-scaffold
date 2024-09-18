@@ -44,23 +44,6 @@ public strictfp class RobotPlayer {
             Direction.NORTHWEST,
     };
 
-    enum Strategies {
-        PREPARE(new PrepareStrategy()),
-        CAPTURE(new CaptureStrategy()),
-        GO_HOME(new BringBackTheGoodiesStrategy()),
-        HUNT(new KillThemAllStrategy());
-
-        private final Strategy strategy;
-
-        Strategies(Strategy strategy) {
-            this.strategy = strategy;
-        }
-
-        void execute(RobotController rc) throws GameActionException {
-            strategy.execute(rc);
-        }
-    }
-
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
      * It is like the main function for your robot. If this method returns, the robot dies!
@@ -70,21 +53,12 @@ public strictfp class RobotPlayer {
      **/
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
-
-        // Hello world! Standard output is very useful for debugging.
-        // Everything you say here will be directly viewable in your terminal when you run a match!
-//        System.out.println("I'm alive");
-
-        // You can also use indicators to save debug notes in replays.
-//        rc.setIndicatorString("Hello world!");
-
         storeEnemySpawn(rc);
-
 
         Strategy alwaysStrategy = null;
 
         if (rng.nextInt(10) == 1) { // 10% chance to hunt
-            alwaysStrategy = new KillThemAllStrategy();
+            alwaysStrategy = new GeneralStrategy();
             System.out.println("Hunter");
             rc.setIndicatorString("Hunter");
         }
@@ -124,6 +98,23 @@ public strictfp class RobotPlayer {
         }
 
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
+    }
+
+    enum Strategies {
+        PREPARE(new PrepareStrategy()),
+        CAPTURE(new CaptureStrategy()),
+        GO_HOME(new BringBackTheGoodiesStrategy()),
+        HUNT(new GeneralStrategy());
+
+        private final Strategy strategy;
+
+        Strategies(Strategy strategy) {
+            this.strategy = strategy;
+        }
+
+        void execute(RobotController rc) throws GameActionException {
+            strategy.execute(rc);
+        }
     }
 
     static MapLocation closestSpawnLoc;
