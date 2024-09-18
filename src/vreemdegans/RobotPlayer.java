@@ -62,11 +62,11 @@ public strictfp class RobotPlayer {
 
         if (rng.nextInt(10) == 1) { // 10% chance to hunt
             alwaysStrategy = GENERIC;
-            System.out.println("Hunter");
+//            System.out.println("Hunter");
             rc.setIndicatorString("Hunter");
         } else if (rc.readSharedArray(Discovery.BuildersCount) < 3) {
             alwaysStrategy = BUILD;
-            System.out.println("Builder");
+//            System.out.println("Builder");
             rc.setIndicatorString("Builder");
             int builders = rc.readSharedArray(Discovery.BuildersCount);
             rc.writeSharedArray(Discovery.BuildersCount, builders + 1);
@@ -88,13 +88,13 @@ public strictfp class RobotPlayer {
                 // Oh no! It looks like we did something illegal in the Battlecode world. You should
                 // handle GameActionExceptions judiciously, in case unexpected events occur in the game
                 // world. Remember, uncaught exceptions cause your robot to explode!
-                System.out.println("GameActionException");
+//                System.out.println("GameActionException");
                 e.printStackTrace();
 
             } catch (Exception e) {
                 // Oh no! It looks like our code tried to do something bad. This isn't a
                 // GameActionException, so it's more likely to be a bug in our code.
-                System.out.println("Exception");
+//                System.out.println("Exception");
                 e.printStackTrace();
 
             } finally {

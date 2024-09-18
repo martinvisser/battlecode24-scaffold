@@ -127,8 +127,8 @@ class Discovery {
             }
         }
 
-        System.out.println("spawn 1 " + rc.readSharedArray(EnemySpawn1LocationX) + " " + rc.readSharedArray(EnemySpawn1LocationY));
-        System.out.println("spawn 2 " + rc.readSharedArray(EnemySpawn2LocationX) + " " + rc.readSharedArray(EnemySpawn2LocationY));
-        System.out.println("spawn 3 " + rc.readSharedArray(EnemySpawn3LocationX) + " " + rc.readSharedArray(EnemySpawn3LocationY));
+//        System.out.println("spawn 1 " + rc.readSharedArray(EnemySpawn1LocationX) + " " + rc.readSharedArray(EnemySpawn1LocationY));
+//        System.out.println("spawn 2 " + rc.readSharedArray(EnemySpawn2LocationX) + " " + rc.readSharedArray(EnemySpawn2LocationY));
+//        System.out.println("spawn 3 " + rc.readSharedArray(EnemySpawn3LocationX) + " " + rc.readSharedArray(EnemySpawn3LocationY));
     }
 }
