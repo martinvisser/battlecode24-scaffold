@@ -7,6 +7,11 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static battlecode.common.GlobalUpgrade.ATTACK;
+import static vreemdegans.BringItBack.goHome;
+import static vreemdegans.DiscoverEnemies.storeEnemySpawn;
+import static vreemdegans.GetTheFood.capture;
+import static vreemdegans.Movement.moveTo;
+import static vreemdegans.PrepareDuck.prepare;
 
 /**
  * RobotPlayer is the class that describes your main robot strategy.
@@ -29,14 +34,6 @@ public strictfp class RobotPlayer {
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
     static final Random rng = new Random(1337);
-
-    static final int Spawn1LocationX = 1;
-    static final int Spawn1LocationY = 2;
-    static final int Spawn2LocationX = 3;
-    static final int Spawn2LocationY = 4;
-    static final int Spawn3LocationX = 5;
-    static final int Spawn3LocationY = 6;
-
 
     /**
      * Array containing all the possible movement directions.
@@ -102,7 +99,7 @@ public strictfp class RobotPlayer {
                             goHome(rc);
                             break;
                         case HUNT:
-                            hunt(rc);
+                            DuckHunt.hunt(rc);
                             break;
                     }
 
@@ -158,268 +155,11 @@ public strictfp class RobotPlayer {
         }
     }
 
-    private static void storeEnemySpawn(RobotController rc) throws GameActionException {
-        // try to find the last known location of the dropped flags, if it's found and not stored, store it
-        MapLocation[] mapLocations = rc.senseBroadcastFlagLocations();
-        if (mapLocations.length < 1) {
-            return;
-        }
-
-        if (rc.readSharedArray(Spawn1LocationX) != 0
-                && rc.readSharedArray(Spawn1LocationY) != 0
-                && rc.readSharedArray(Spawn2LocationX) != 0
-        ) {
-            return;
-        }
-
-        for (MapLocation mapLocation : mapLocations) {
-            if (rc.readSharedArray(Spawn1LocationX) == 0 && rc.readSharedArray(Spawn1LocationY) == 0) {
-                rc.writeSharedArray(Spawn1LocationX, mapLocation.x);
-                rc.writeSharedArray(Spawn1LocationY, mapLocation.y);
-            } else if (rc.readSharedArray(Spawn2LocationX) == 0 && rc.readSharedArray(Spawn2LocationY) == 0) {
-                rc.writeSharedArray(Spawn2LocationX, mapLocation.x);
-                rc.writeSharedArray(Spawn2LocationY, mapLocation.y);
-            } else if (rc.readSharedArray(Spawn3LocationX) == 0 && rc.readSharedArray(Spawn3LocationY) == 0) {
-                rc.writeSharedArray(Spawn3LocationX, mapLocation.x);
-                rc.writeSharedArray(Spawn3LocationY, mapLocation.y);
-            }
-        }
-
-        System.out.println("spawn 1 " + rc.readSharedArray(Spawn1LocationX) + " " + rc.readSharedArray(Spawn1LocationY));
-        System.out.println("spawn 2 " + rc.readSharedArray(Spawn2LocationX) + " " + rc.readSharedArray(Spawn2LocationY));
-        System.out.println("spawn 3 " + rc.readSharedArray(Spawn3LocationX) + " " + rc.readSharedArray(Spawn3LocationY));
-    }
-
-    private static void hunt(RobotController rc) throws GameActionException {
-        // check if we can get some bread
-        // check if i'm around a lot of damaged allies, if so do a heal
-        // if not, search for enemies and attack them
-        // if none found nearby move towards enemy spawn point
-
-        rc.setIndicatorString("Hunting");
-
-        gotoCrumbIfPossible(rc);
-        healIfPossible(rc);
-        attackIfPossible(rc);
-        placeTrapIfPossible(rc);
-        moveToEnemySpawn(rc);
-    }
-
-    private static void placeTrapIfPossible(RobotController rc) throws GameActionException {
-        if (rc.canBuild(TrapType.EXPLOSIVE, rc.getLocation())) {
-            rc.build(TrapType.EXPLOSIVE, rc.getLocation());
-        }
-    }
-
-    private static void gotoCrumbIfPossible(RobotController rc) throws GameActionException {
-        MapLocation[] crumbs = rc.senseNearbyCrumbs(-1);
-        MapLocation closestCrumb = Arrays.stream(crumbs).min(Comparator.comparingInt(x -> rc.getLocation().distanceSquaredTo(x))).orElse(null);
-        if (crumbs.length > 0) {
-            rc.setIndicatorString("Moving to closest crumb: " + closestCrumb);
-            moveTo(rc, closestCrumb);
-        }
-    }
-
-    private static void healIfPossible(RobotController rc) throws GameActionException {
-        RobotInfo[] nearbyAllies = rc.senseNearbyRobots(4, rc.getTeam());
-        if (nearbyAllies.length > 0) {
-            RobotInfo target = chooseHealTarget(rc, nearbyAllies);
-            if (target != null) {
-                try {
-                    rc.heal(target.getLocation());
-                } catch (GameActionException e) {
-                    // ignore
-                }
-            }
-        }
-    }
-
-    private static void prepare(RobotController rc) throws GameActionException {
-        // Move and attack randomly if no objective.
-        gotoCrumbIfPossible(rc);
-        moveToEnemySpawn(rc);
-
-        Direction dir = directions[rng.nextInt(directions.length)];
-        MapLocation nextLoc = rc.getLocation().add(dir);
-        if (rc.canMove(dir)) {
-            rc.move(dir);
-        } else if (rc.canAttack(nextLoc)) {
-            rc.attack(nextLoc);
-        }
-
-        // Rarely attempt placing traps behind the robot.
-        MapLocation prevLoc = rc.getLocation().subtract(dir);
-        if (rc.canBuild(TrapType.EXPLOSIVE, prevLoc) && rng.nextInt() % 37 == 1)
-            rc.build(TrapType.EXPLOSIVE, prevLoc);
-    }
-
     private static void spawn(RobotController rc) throws GameActionException {
         MapLocation[] spawnLocs = rc.getAllySpawnLocations();
         // Pick a random spawn location to attempt spawning in.
         MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
         if (rc.canSpawn(randomLoc)) rc.spawn(randomLoc);
-    }
-
-    private static void moveTo(RobotController rc, MapLocation location) throws GameActionException {
-        Direction dir = rc.getLocation().directionTo(location);
-        rc.setIndicatorLine(rc.getLocation(), location, 0, 255, 0);
-        if (rc.canMove(dir)) {
-            rc.move(dir);
-        } else if (rc.canFill(location)) {
-            rc.fill(location);
-        } else {
-            final Direction nextDirection = getNextDirection(dir, rc);
-            if (nextDirection != null) {
-                rc.move(nextDirection);
-            }
-
-            // if we are stuck, try to fill water or another land action
-            fillNearbyWithWater(rc);
-        }
-    }
-
-    private static void capture(RobotController rc) throws GameActionException {
-        if (rc.canPickupFlag(rc.getLocation())) {
-            rc.pickupFlag(rc.getLocation());
-            rc.setIndicatorString("Holding a flag!");
-
-            strategy = Strategy.GO_HOME;
-            return;
-        }
-
-        // have a small chance of attacking if we are going for the flag and see an enemy
-        if (rng.nextInt() % 5 < 2) {
-            attackIfPossible(rc);
-        }
-
-        // Move towards the enemy flag.
-        // check if i can see a flag, if not request latest general location of flags to target
-        FlagInfo[] enemyFlags = rc.senseNearbyFlags(1000, rc.getTeam().opponent());
-
-        // filter out picked up flags
-        enemyFlags = Arrays.stream(enemyFlags).filter(x -> !x.isPickedUp()).toArray(FlagInfo[]::new);
-
-        if (enemyFlags.length > 0) {
-            FlagInfo flagInfo = enemyFlags[rng.nextInt(enemyFlags.length)]; // TODO make all of them go for different flags
-            final MapLocation location = flagInfo.getLocation();
-            moveTo(rc, location);
-        } else {
-            MapLocation[] broadcastedFlags = rc.senseBroadcastFlagLocations();
-            if (broadcastedFlags.length == 0) {
-                hunt(rc);
-                return;
-            }
-
-            final MapLocation broadcastedFlag = broadcastedFlags[rng.nextInt(broadcastedFlags.length)];
-            moveTo(rc, broadcastedFlag);
-        }
-    }
-
-    private static void moveToEnemySpawn(RobotController rc) throws GameActionException {//        MapLocation[] enemySpawnLocs = rc.getAllySpawnLocations()
-        rc.setIndicatorString("Moving to enemy spawn");
-        // choose one of the 3 enemy spawn locations and move there
-
-        ArrayList<MapLocation> mapLocations = new ArrayList<>();
-        mapLocations.add(new MapLocation(rc.readSharedArray(Spawn1LocationX), rc.readSharedArray(Spawn1LocationY)));
-        mapLocations.add(new MapLocation(rc.readSharedArray(Spawn2LocationX), rc.readSharedArray(Spawn2LocationY)));
-        mapLocations.add(new MapLocation(rc.readSharedArray(Spawn3LocationX), rc.readSharedArray(Spawn3LocationY)));
-
-        MapLocation target = mapLocations.get(rng.nextInt(mapLocations.size()));
-
-        // take average location of all enemy spawn locations
-        int x = 0;
-        int y = 0;
-        for (MapLocation mapLocation : mapLocations) {
-            x += mapLocation.x;
-            y += mapLocation.y;
-        }
-        target = new MapLocation(x / mapLocations.size(), y / mapLocations.size());
-
-        moveTo(rc, target);
-    }
-
-    private static RobotInfo chooseHealTarget(RobotController rc, RobotInfo[] nearbyAllies) {
-        Stream<RobotInfo> healableRobots = Arrays.stream(nearbyAllies).filter(x -> rc.canHeal(x.getLocation()));
-        // sort them by health and return lowest one
-
-        return healableRobots.min(Comparator.comparingInt(x -> x.getHealth())).orElse(null);
-    }
-
-    private static void attackIfPossible(RobotController rc) throws GameActionException {
-        RobotInfo[] enemyRobots = rc.senseNearbyRobots(6, rc.getTeam().opponent());
-        if (enemyRobots.length > 0) {
-            RobotInfo target = chooseAttackTarget(rc, enemyRobots);
-            if (target != null) {
-                try {
-                    rc.attack(enemyRobots[0].getLocation());
-                } catch (GameActionException e) {
-                    // ignore
-                }
-            } else {
-                moveTo(rc, enemyRobots[0].getLocation());
-            }
-        }
-    }
-
-    private static RobotInfo chooseAttackTarget(RobotController rc, RobotInfo[] enemyRobots) {
-        Stream<RobotInfo> attackableRobots = Arrays.stream(enemyRobots).filter(x -> rc.canAttack(x.getLocation()));
-        // sort them by health and return lowest one
-
-        return attackableRobots.min(Comparator.comparingInt(x -> x.getHealth())).orElse(null);
-    }
-
-    private static void fillNearbyWithWater(RobotController rc) throws GameActionException {
-        MapInfo[] nearbyMapInfos = rc.senseNearbyMapInfos(1);
-        for (MapInfo mapInfo : nearbyMapInfos) {
-            if (rc.canFill(mapInfo.getMapLocation())) {
-                rc.fill(mapInfo.getMapLocation());
-            }
-        }
-    }
-
-    private static void goHome(RobotController rc) throws GameActionException {
-        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-        MapLocation currentLocation = rc.getLocation();
-        if (closestSpawnLoc == null) {
-            closestSpawnLoc = Arrays.stream(spawnLocs)
-                    .min(Comparator.comparingInt(loc -> loc.distanceSquaredTo(currentLocation)))
-                    .orElseGet(() -> spawnLocs[0]);
-
-            rc.setIndicatorString("Going home to: " + closestSpawnLoc);
-        }
-        if (homeDir == null || !rc.canMove(homeDir)) {
-            homeDir = rc.getLocation().directionTo(closestSpawnLoc);
-        }
-
-        // Check if a closest spawn location was found
-        moveTo(rc, closestSpawnLoc);
-    }
-
-    private static Direction getNextDirection(Direction current, RobotController rc) throws GameActionException {
-        if (rc.canMove(current.rotateRight())) {
-            return current.rotateRight();
-        } else if (rc.canMove(current.rotateRight().rotateRight())) {
-            return current.rotateRight().rotateRight();
-        } else if (rc.canMove(current.rotateRight().rotateRight().rotateRight())) {
-            return current.rotateRight().rotateRight().rotateRight();
-        } else if (rc.canMove(current.rotateLeft())) {
-            return current.rotateLeft();
-        } else if (rc.canMove(current.rotateLeft().rotateLeft())) {
-            return current.rotateLeft().rotateLeft();
-        } else if (rc.canMove(current.rotateLeft().rotateLeft().rotateLeft())) {
-            return current.rotateLeft().rotateLeft().rotateLeft();
-        } else if (rc.canMove(current.opposite())) {
-            return current.opposite();
-        } else {
-            final MapInfo[] a = rc.senseNearbyMapInfos(2);
-            return Arrays.stream(a)
-                    .filter(mapInfo -> mapInfo.isPassable())
-                    .map(mapInfo -> rc.getLocation().directionTo(mapInfo.getMapLocation()))
-                    .filter(dir -> dir != current)
-                    .filter(dir -> rc.canMove(dir))
-                    .findAny()
-                    .orElse(null);
-        }
     }
 
     private static void updateEnemyRobots(RobotController rc) throws GameActionException {
