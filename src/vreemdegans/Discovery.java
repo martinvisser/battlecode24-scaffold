@@ -5,6 +5,8 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
+import java.util.ArrayList;
+
 import static battlecode.common.GameConstants.SETUP_ROUNDS;
 
 class Discovery {
@@ -24,6 +26,7 @@ class Discovery {
     static final int AllyFlag3LocationY = 14;
     static final int Hiders = 15;
     static final int LastChangedTurn = 16;
+    static final int BuildersCount = 17;
 
     static void updateAllyFlagLocationAndHuntTarget(RobotController rc, int roundCount) throws GameActionException {
         MapLocation flag1Location = new MapLocation(rc.readSharedArray(AllyFlag1LocationX), rc.readSharedArray(AllyFlag1LocationY));
@@ -86,7 +89,15 @@ class Discovery {
             rc.writeSharedArray(HunterTargetX, 0);
             rc.writeSharedArray(HunterTargetY, 0);
         }
+    }
 
+    static ArrayList<MapLocation> alliedFlags(RobotController rc) throws GameActionException {
+        ArrayList<MapLocation> flags = new ArrayList<>();
+        flags.add(new MapLocation(rc.readSharedArray(AllyFlag1LocationX), rc.readSharedArray(AllyFlag1LocationY)));
+        flags.add(new MapLocation(rc.readSharedArray(AllyFlag2LocationX), rc.readSharedArray(AllyFlag2LocationY)));
+        flags.add(new MapLocation(rc.readSharedArray(AllyFlag3LocationX), rc.readSharedArray(AllyFlag3LocationY)));
+
+        return flags;
     }
 
 

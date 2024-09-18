@@ -43,9 +43,6 @@ public class GeneralStrategy implements Strategy {
                     // ignore
                 }
             }
-//            else {
-//                moveTo(rc, enemyRobots[0].getLocation());
-//            }
         }
     }
 

@@ -68,6 +68,12 @@ public strictfp class RobotPlayer {
             alwaysStrategy = GENERIC;
             System.out.println("Hunter");
             rc.setIndicatorString("Hunter");
+        } else if (rc.readSharedArray(Discovery.BuildersCount) < 3) {
+            alwaysStrategy = BUILD;
+            System.out.println("Builder");
+            rc.setIndicatorString("Builder");
+            int builders = rc.readSharedArray(Discovery.BuildersCount);
+            rc.writeSharedArray(Discovery.BuildersCount, builders + 1);
         }
 
         while (true) {
