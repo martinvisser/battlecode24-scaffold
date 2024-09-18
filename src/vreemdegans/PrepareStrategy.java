@@ -2,11 +2,12 @@ package vreemdegans;
 
 import battlecode.common.*;
 
-import static vreemdegans.DuckHunt.gotoCrumbIfPossible;
-import static vreemdegans.DuckHunt.moveToEnemySpawn;
+import static vreemdegans.Movement.gotoCrumbIfPossible;
+import static vreemdegans.Movement.moveToEnemySpawn;
 
-class PrepareDuck {
-    static void prepare(RobotController rc) throws GameActionException {
+public class PrepareStrategy implements Strategy {
+    @Override
+    public void execute(RobotController rc) throws GameActionException {
         // Move and attack randomly if no objective.
         gotoCrumbIfPossible(rc);
         moveToEnemySpawn(rc);

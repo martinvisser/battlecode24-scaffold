@@ -7,17 +7,17 @@ import battlecode.common.RobotController;
 
 import java.util.Arrays;
 
-import static vreemdegans.DuckHunt.attackIfPossible;
-import static vreemdegans.DuckHunt.hunt;
+import static vreemdegans.KillThemAllStrategy.attackIfPossible;
 import static vreemdegans.Movement.moveTo;
 
-public class GetTheFood {
-    static void capture(RobotController rc) throws GameActionException {
+public class CaptureStrategy implements Strategy {
+    @Override
+    public void execute(RobotController rc) throws GameActionException {
         if (rc.canPickupFlag(rc.getLocation())) {
             rc.pickupFlag(rc.getLocation());
             rc.setIndicatorString("Holding a flag!");
 
-            RobotPlayer.strategy = RobotPlayer.Strategy.GO_HOME;
+            RobotPlayer.strategy = RobotPlayer.Strategies.GO_HOME;
             return;
         }
 
@@ -40,7 +40,8 @@ public class GetTheFood {
         } else {
             MapLocation[] broadcastedFlags = rc.senseBroadcastFlagLocations();
             if (broadcastedFlags.length == 0) {
-                hunt(rc);
+                RobotPlayer.strategy = RobotPlayer.Strategies.HUNT;
+                RobotPlayer.strategy.strategy.execute(rc);
                 return;
             }
 

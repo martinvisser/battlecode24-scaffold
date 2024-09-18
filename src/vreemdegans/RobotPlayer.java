@@ -2,16 +2,10 @@ package vreemdegans;
 
 import battlecode.common.*;
 
-import java.util.ArrayList;
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.Random;
 
 import static battlecode.common.GlobalUpgrade.ATTACK;
-import static vreemdegans.BringItBack.goHome;
 import static vreemdegans.DiscoverEnemies.storeEnemySpawn;
-import static vreemdegans.GetTheFood.capture;
-import static vreemdegans.Movement.moveTo;
-import static vreemdegans.PrepareDuck.prepare;
 
 /**
  * RobotPlayer is the class that describes your main robot strategy.
@@ -49,14 +43,20 @@ public strictfp class RobotPlayer {
             Direction.NORTHWEST,
     };
 
-    enum Strategy {
-        PREPARE,
-        CAPTURE,
-        GO_HOME,
-        HUNT,
+    enum Strategies {
+        PREPARE(new PrepareStrategy()),
+        CAPTURE(new CaptureStrategy()),
+        GO_HOME(new BringBackTheGoodiesStrategy()),
+        HUNT(new KillThemAllStrategy());
+
+        final Strategy strategy;
+
+        Strategies(Strategy strategy) {
+            this.strategy = strategy;
+        }
     }
 
-    static Strategy strategy = Strategy.PREPARE;
+    static Strategies strategy = Strategies.PREPARE;
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -81,27 +81,11 @@ public strictfp class RobotPlayer {
             turnCount += 1;
             tryBuyGlobalUpgrade(rc); // only do every 600 turns
 
-
             try {
                 if (!rc.isSpawned()) {
                     spawn(rc);
                 } else {
                     decide(rc);
-
-                    switch (strategy) {
-                        case PREPARE:
-                            prepare(rc);
-                            break;
-                        case CAPTURE:
-                            capture(rc);
-                            break;
-                        case GO_HOME:
-                            goHome(rc);
-                            break;
-                        case HUNT:
-                            DuckHunt.hunt(rc);
-                            break;
-                    }
 
                     // We can also move our code into different methods or classes to better organize it!
                     updateEnemyRobots(rc);
@@ -136,17 +120,16 @@ public strictfp class RobotPlayer {
 
     private static void decide(RobotController rc) throws GameActionException {
         if (rc.getRoundNum() < GameConstants.SETUP_ROUNDS) {
-            strategy = Strategy.PREPARE;
-            return;
-        }
-
-        if (rc.hasFlag()) {
-            strategy = Strategy.GO_HOME;
+            strategy = Strategies.PREPARE;
+        } else if (rc.hasFlag()) {
+            strategy = Strategies.GO_HOME;
         } else {
-            strategy = Strategy.CAPTURE;
+            strategy = Strategies.CAPTURE;
         }
 
         rc.setIndicatorString("strategy: " + strategy);
+
+        strategy.strategy.execute(rc);
     }
 
     private static void tryBuyGlobalUpgrade(RobotController rc) throws GameActionException {

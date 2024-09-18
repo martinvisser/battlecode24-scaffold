@@ -9,8 +9,9 @@ import java.util.Comparator;
 
 import static vreemdegans.Movement.moveTo;
 
-public class BringItBack {
-    static void goHome(RobotController rc) throws GameActionException {
+public class BringBackTheGoodiesStrategy implements Strategy {
+    @Override
+    public void execute(RobotController rc) throws GameActionException {
         MapLocation[] spawnLocs = rc.getAllySpawnLocations();
         MapLocation currentLocation = rc.getLocation();
         if (RobotPlayer.closestSpawnLoc == null) {
