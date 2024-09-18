@@ -8,8 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static vreemdegans.Discovery.*;
-import static vreemdegans.RobotPlayer.directions;
-import static vreemdegans.RobotPlayer.rng;
+import static vreemdegans.RobotPlayer.*;
 
 class Movement {
 
@@ -19,6 +18,7 @@ class Movement {
 
         if (rc.canMove(dir)) {
             rc.move(dir);
+            lastDirection = dir;
         } else if (rc.canFill(location)) {
             rc.fill(location);
         } else {
@@ -38,17 +38,23 @@ class Movement {
 
     private static void moveToNext(Direction current, RobotController rc) throws GameActionException {
         final Direction nextDirection = findDirection(current, rc, 0);
-        if (nextDirection != null) rc.move(nextDirection);
+        if (nextDirection != null) {
+            rc.move(nextDirection);
+            lastDirection = nextDirection;
+        }
         else Movement.randomMove(rc);
     }
 
     private static Direction findDirection(Direction current, RobotController rc, int attempts) throws GameActionException {
         if (attempts < Direction.allDirections().length) {
             Direction nextDirection = current.rotateRight();
-            if (nextDirection != current) {
-                final MapLocation newLocation = rc.getLocation().add(nextDirection).add(nextDirection);
-                if (rc.onTheMap(newLocation) && rc.sensePassability(newLocation) && rc.canMove(nextDirection)) {
-                    return nextDirection;
+            if (lastDirection != null && lastDirection.opposite() != nextDirection) {
+
+                if (nextDirection != current) {
+                    final MapLocation newLocation = rc.getLocation().add(nextDirection).add(nextDirection);
+                    if (rc.onTheMap(newLocation) && rc.sensePassability(newLocation) && rc.canMove(nextDirection)) {
+                        return nextDirection;
+                    }
                 }
             }
             return findDirection(nextDirection, rc, attempts + 1);

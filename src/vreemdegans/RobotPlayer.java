@@ -2,7 +2,7 @@ package vreemdegans;
 
 import battlecode.common.*;
 
-import java.util.*;
+import java.util.Random;
 
 import static battlecode.common.GlobalUpgrade.ATTACK;
 import static vreemdegans.ActiveStrategy.*;
@@ -46,6 +46,7 @@ public strictfp class RobotPlayer {
     };
 
     static ActiveStrategy activeStrategy = PREPARE;
+    static Direction lastDirection = null;
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
