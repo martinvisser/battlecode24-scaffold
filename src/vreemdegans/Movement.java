@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import static vreemdegans.Discovery.*;
+import static vreemdegans.RobotPlayer.directions;
 import static vreemdegans.RobotPlayer.rng;
 
 class Movement {
@@ -14,6 +15,21 @@ class Movement {
     static void moveTo(RobotController rc, MapLocation location) throws GameActionException {
         Direction dir = rc.getLocation().directionTo(location);
         rc.setIndicatorLine(rc.getLocation(), location, 0, 255, 0);
+
+//        // RobotPlayer.lastDirections contains less than 2, add the direction
+//        // Otherwise remove the first element and add the new direction
+//        if (RobotPlayer.lastDirections.size() < 2) {
+//            RobotPlayer.lastDirections.add(dir);
+//        } else {
+//            RobotPlayer.lastDirections.remove();
+//            RobotPlayer.lastDirections.add(dir);
+//        }
+//
+//        Direction newDir = Arrays.stream(directions)
+//                .filter(d -> RobotPlayer.lastDirections.stream().noneMatch(ld -> ld == d))
+//                .filter(d -> rc.canMove(d))
+//                .findAny()
+//                .orElse(dir);
 
         if (rc.canMove(dir)) {
             rc.move(dir);
@@ -73,7 +89,7 @@ class Movement {
     }
 
     static void randomMove(RobotController rc) throws GameActionException {
-        Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
+        Direction dir = directions[rng.nextInt(directions.length)];
         if (rc.canMove(dir)) {
             rc.move(dir);
         }
@@ -90,7 +106,6 @@ class Movement {
             }
         }
     }
-
 
     static void moveToEnemySpawn(RobotController rc) throws GameActionException {//        MapLocation[] enemySpawnLocs = rc.getAllySpawnLocations()
         // choose one of the 3 enemy spawn locations and move there

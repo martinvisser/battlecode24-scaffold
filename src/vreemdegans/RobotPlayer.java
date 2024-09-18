@@ -2,9 +2,12 @@ package vreemdegans;
 
 import battlecode.common.*;
 
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.Random;
 
 import static battlecode.common.GlobalUpgrade.ATTACK;
+import static vreemdegans.ActiveStrategy.*;
 import static vreemdegans.Discovery.storeEnemySpawn;
 import static vreemdegans.Discovery.updateAllyFlagLocationAndHuntTarget;
 
@@ -44,6 +47,10 @@ public strictfp class RobotPlayer {
             Direction.NORTHWEST,
     };
 
+    static ActiveStrategy activeStrategy = PREPARE;
+    static boolean isHider = false;
+    static Queue<Direction> lastDirections = new ArrayDeque<>(2);
+
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
      * It is like the main function for your robot. If this method returns, the robot dies!
@@ -55,14 +62,13 @@ public strictfp class RobotPlayer {
     public static void run(RobotController rc) throws GameActionException {
         storeEnemySpawn(rc);
 
-        Strategy alwaysStrategy = null;
+        ActiveStrategy alwaysStrategy = null;
 
         if (rng.nextInt(10) == 1) { // 10% chance to hunt
-            alwaysStrategy = new GeneralStrategy();
+            alwaysStrategy = GENERIC;
             System.out.println("Hunter");
             rc.setIndicatorString("Hunter");
         }
-
 
         while (true) {
             turnCount += 1;
@@ -73,7 +79,7 @@ public strictfp class RobotPlayer {
                     spawn(rc);
                 } else {
                     updateAllyFlagLocationAndHuntTarget(rc, turnCount);
-                    pickStrategy(rc, alwaysStrategy, turnCount);
+                    pickStrategy(rc, alwaysStrategy);
                 }
 
             } catch (GameActionException e) {
@@ -100,44 +106,30 @@ public strictfp class RobotPlayer {
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
     }
 
-    private static void pickStrategy(RobotController rc, Strategy alwaysStrategy, int turnCount) throws GameActionException {
+    static MapLocation closestSpawnLoc;
+    static Direction homeDir;
+
+    private static void pickStrategy(RobotController rc, ActiveStrategy alwaysStrategy) throws GameActionException {
         if (alwaysStrategy != null) {
             alwaysStrategy.execute(rc, turnCount);
             return;
         }
 
-        Strategies strategy;
         if (rc.getRoundNum() < GameConstants.SETUP_ROUNDS) {
-            strategy = Strategies.PREPARE;
+            if (isHider) {
+                activeStrategy = HIDE_THE_FLAG;
+            } else {
+                activeStrategy = PREPARE;
+            }
         } else if (rc.hasFlag()) {
-            strategy = Strategies.GO_HOME;
+            activeStrategy = GO_HOME;
         } else {
-            strategy = Strategies.CAPTURE;
+            activeStrategy = CAPTURE;
         }
 
-        rc.setIndicatorString("strategy: " + strategy);
+        rc.setIndicatorString("Active strategy: " + activeStrategy);
 
-        strategy.execute(rc, turnCount);
-    }
-
-    static MapLocation closestSpawnLoc;
-    static Direction homeDir;
-
-    enum Strategies {
-        PREPARE(new PrepareStrategy()),
-        CAPTURE(new CaptureStrategy()),
-        GO_HOME(new BringBackTheGoodiesStrategy()),
-        HUNT(new GeneralStrategy());
-
-        private final Strategy strategy;
-
-        Strategies(Strategy strategy) {
-            this.strategy = strategy;
-        }
-
-        void execute(RobotController rc, int turnCount) throws GameActionException {
-            strategy.execute(rc, turnCount);
-        }
+        activeStrategy.execute(rc, turnCount);
     }
 
     private static void tryBuyGlobalUpgrade(RobotController rc) throws GameActionException {

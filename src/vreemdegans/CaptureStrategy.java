@@ -7,6 +7,8 @@ import battlecode.common.RobotController;
 
 import java.util.Arrays;
 
+import static vreemdegans.ActiveStrategy.GO_HOME;
+import static vreemdegans.ActiveStrategy.SUPER_HUNT;
 import static vreemdegans.GeneralStrategy.attackIfPossible;
 import static vreemdegans.Movement.moveTo;
 
@@ -17,7 +19,7 @@ public class CaptureStrategy implements Strategy {
             rc.pickupFlag(rc.getLocation());
             rc.setIndicatorString("Holding a flag!");
 
-            RobotPlayer.Strategies.GO_HOME.execute(rc, turnCounter);
+            GO_HOME.setAndExecute(rc, turnCounter);
             return;
         }
 
@@ -40,7 +42,7 @@ public class CaptureStrategy implements Strategy {
         } else {
             MapLocation[] broadcastedFlags = rc.senseBroadcastFlagLocations();
             if (broadcastedFlags.length == 0) {
-                RobotPlayer.Strategies.HUNT.execute(rc, turnCounter);
+                SUPER_HUNT.setAndExecute(rc, turnCounter);
                 return;
             }
 

@@ -5,6 +5,8 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
+import static battlecode.common.GameConstants.SETUP_ROUNDS;
+
 class Discovery {
     static final int EnemySpawn1LocationX = 1;
     static final int EnemySpawn1LocationY = 2;
@@ -20,9 +22,8 @@ class Discovery {
     static final int AllyFlag2LocationY = 12;
     static final int AllyFlag3LocationX = 13;
     static final int AllyFlag3LocationY = 14;
-    static final int HidersCount = 15;
+    static final int Hiders = 15;
     static final int LastChangedTurn = 16;
-
 
     static void updateAllyFlagLocationAndHuntTarget(RobotController rc, int roundCount) throws GameActionException {
         MapLocation flag1Location = new MapLocation(rc.readSharedArray(AllyFlag1LocationX), rc.readSharedArray(AllyFlag1LocationY));
@@ -73,7 +74,7 @@ class Discovery {
             rc.writeSharedArray(LastChangedTurn, roundCount);
         }
 
-        if (changed && roundCount > 200) {
+        if (changed && roundCount > SETUP_ROUNDS) {
 //            System.out.println("New hunt target: " + newHuntLocation);
             rc.writeSharedArray(HunterTargetX, newHuntLocation.x);
             rc.writeSharedArray(HunterTargetY, newHuntLocation.y);
