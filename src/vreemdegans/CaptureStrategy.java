@@ -17,7 +17,7 @@ public class CaptureStrategy implements Strategy {
             rc.pickupFlag(rc.getLocation());
             rc.setIndicatorString("Holding a flag!");
 
-            RobotPlayer.strategy = RobotPlayer.Strategies.GO_HOME;
+            RobotPlayer.Strategies.GO_HOME.execute(rc);
             return;
         }
 
@@ -40,8 +40,7 @@ public class CaptureStrategy implements Strategy {
         } else {
             MapLocation[] broadcastedFlags = rc.senseBroadcastFlagLocations();
             if (broadcastedFlags.length == 0) {
-                RobotPlayer.strategy = RobotPlayer.Strategies.HUNT;
-                RobotPlayer.strategy.strategy.execute(rc);
+                RobotPlayer.Strategies.HUNT.execute(rc);
                 return;
             }
 
