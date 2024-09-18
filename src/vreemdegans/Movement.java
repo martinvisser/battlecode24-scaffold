@@ -20,15 +20,11 @@ class Movement {
         } else if (rc.canFill(location)) {
             rc.fill(location);
         } else {
-            fillNearbyWithWater(rc);
+            final Direction nextDirection = getNextDirection(dir, rc);
+            if (nextDirection != null) {
+                rc.move(nextDirection);
+            }
         }
-
-
-        final Direction nextDirection = getNextDirection(dir, rc);
-        if (nextDirection != null) {
-            rc.move(nextDirection);
-        }
-
     }
 
     static void fillNearbyWithWater(RobotController rc) throws GameActionException {

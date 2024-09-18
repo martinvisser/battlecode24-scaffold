@@ -20,6 +20,7 @@ public class PrepareStrategy implements Strategy {
         }
 
         moveToEnemySpawn(rc);
+        fillNearbyWithWater(rc);
 
         Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
 
