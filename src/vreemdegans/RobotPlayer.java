@@ -28,7 +28,7 @@ public strictfp class RobotPlayer {
      * import at the top of this file. Here, we *seed* the RNG with a constant number (6147); this makes sure
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
-    static final Random rng = new Random();
+    static final Random rng = new Random(1337);
 
     static final int Spawn1LocationX = 1;
     static final int Spawn1LocationY = 2;
@@ -51,6 +51,13 @@ public strictfp class RobotPlayer {
             Direction.WEST,
             Direction.NORTHWEST,
     };
+
+    enum Strategy {
+        PREPARE,
+        CAPTURE,
+        GO_HOME,
+        HUNT,
+    }
 
     static Strategy strategy = Strategy.PREPARE;
 
@@ -285,7 +292,6 @@ public strictfp class RobotPlayer {
             attackIfPossible(rc);
         }
 
-
         // Move towards the enemy flag.
         // check if i can see a flag, if not request latest general location of flags to target
         FlagInfo[] enemyFlags = rc.senseNearbyFlags(1000, rc.getTeam().opponent());
@@ -346,12 +352,12 @@ public strictfp class RobotPlayer {
             if (target != null) {
                 try {
                     rc.attack(enemyRobots[0].getLocation());
-                    return;
                 } catch (GameActionException e) {
                     // ignore
                 }
+            } else {
+                moveTo(rc, enemyRobots[0].getLocation());
             }
-            moveTo(rc, enemyRobots[0].getLocation());
         }
     }
 
@@ -360,13 +366,6 @@ public strictfp class RobotPlayer {
         // sort them by health and return lowest one
 
         return attackableRobots.min(Comparator.comparingInt(x -> x.getHealth())).orElse(null);
-    }
-
-    enum Strategy {
-        PREPARE,
-        CAPTURE,
-        GO_HOME,
-        HUNT,
     }
 
     private static void fillNearbyWithWater(RobotController rc) throws GameActionException {
